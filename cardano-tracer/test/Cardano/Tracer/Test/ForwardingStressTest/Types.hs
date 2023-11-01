@@ -5,13 +5,20 @@ module Cardano.Tracer.Test.ForwardingStressTest.Types (
   , Script (..)
   , ScriptRes (..)
   , scriptLength
+  , scriptMessages
   , emptyScriptRes
   ) where
 
 import           Cardano.Logging
+import qualified Cardano.Tracer.Test.Utils as Utils
 
-import           Data.Aeson (Value (..), (.=))
-import           Data.Text hiding (length)
+import           Data.Aeson (FromJSON (..), Value (..), withObject, (.=))
+import           Data.Aeson.Types (Parser, parseFail, parseField)
+import           Data.Text hiding (length, reverse, empty)
+import           Data.Vector (Vector)
+import qualified Data.Vector as Vector
+import           Control.Applicative (empty)
+import           Text.Read (readMaybe)
 
 import           Test.QuickCheck
 
@@ -22,6 +29,34 @@ data Message =
   | Message2 MessageID Text
   | Message3 MessageID Double
   deriving (Eq, Ord, Show)
+
+instance FromJSON Message where
+  parseJSON = withObject "Message" \obj -> do
+    let parseMessageID :: Parser MessageID
+        parseMessageID = do
+          messageId <- parseField obj "mid" -- parseField = (.:)
+          maybe empty pure 
+            (stripBrackets messageId >>= readMaybe @MessageID)
+
+    kind      <- parseField @Text obj "kind"
+    messageId <- parseMessageID
+    case kind of
+      "Message1" ->
+        Message1 messageId <$> parseField @Int obj "workload"
+      "Message2" ->
+        Message2 messageId <$> parseField @Text obj "workload"
+      "Message3" ->
+        Message3 messageId <$> parseField @Double obj "workload"
+      _ ->
+        parseFail "FromJSON Message: 'kind' not one of \"Message1\", \"Message2\" or \"Message3\"."
+
+stripBrackets :: String -> Maybe String
+stripBrackets ('<':str) = go str where
+  go :: String -> Maybe String
+  go ""     = Nothing
+  go ">"    = Just ">"
+  go (_:as) = go as
+stripBrackets _ = Nothing
 
 instance LogFormatting Message where
   forMachine _dtal (Message1 mid i) =
@@ -64,7 +99,6 @@ instance Arbitrary Message where
       Message3 0 <$> arbitrary
     ]
 
-
 -- | Adds a time between 0 and 1.
 --   0 is the time of the test start, and 1 the test end
 data ScriptedMessage = ScriptedMessage Double Message
@@ -77,14 +111,17 @@ instance Ord ScriptedMessage where
 instance Arbitrary ScriptedMessage where
   arbitrary = ScriptedMessage <$> choose (0.0, 1.0) <*> arbitrary
 
-newtype Script = Script [ScriptedMessage]
+newtype Script = Script (Vector ScriptedMessage)
   deriving (Eq, Show)
 
 scriptLength :: Script -> Int
-scriptLength (Script m) = length m
+scriptLength (Script m) = Vector.length m
+
+scriptMessages :: Script -> Vector Message
+scriptMessages (Script messages) = fmap (\(ScriptedMessage _ message) -> message) messages
 
 instance Arbitrary Script where
-  arbitrary = Script <$> listOf arbitrary
+  arbitrary = Script <$> Utils.vectorOf arbitrary
 
 data ScriptRes = ScriptRes {
     srScript     :: Script
@@ -95,7 +132,7 @@ data ScriptRes = ScriptRes {
 
 emptyScriptRes :: ScriptRes
 emptyScriptRes =  ScriptRes {
-    srScript = Script []
+    srScript = Script Vector.empty
   , srStdoutRes = []
   , srForwardRes = []
   , srEkgRes = []
