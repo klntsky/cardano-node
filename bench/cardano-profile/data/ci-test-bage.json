@@ -1,0 +1,71 @@
+{
+  "era": "babbage",
+  "scenario": "fixed-loaded",
+  "composition": {
+    "locations": [
+      "loopback"
+    ],
+    "n_bft_hosts": 0,
+    "n_singular_hosts": 2,
+    "n_dense_hosts": 0,
+    "dense_pool_density": 1,
+    "with_proxy": false,
+    "with_explorer": false,
+    "topology": "uni-circle",
+    "n_hosts": 2,
+    "n_pools": 2,
+    "n_singular_pools": 2,
+    "n_dense_pools": 0,
+    "n_pool_hosts": 2
+  },
+  "generator": {
+    "add_tx_size": 100,
+    "init_cooldown": 5,
+    "inputs_per_tx": 2,
+    "outputs_per_tx": 2,
+    "tx_fee": 1000000,
+    "epochs": 3,
+    "tps": 15,
+    "plutus": {
+      "type": null,
+      "script": null
+    },
+    "tx_count": 9000
+  },
+  "node": {
+    "rts_flags_override": [],
+    "shutdown_on_slot_synced": null,
+    "shutdown_on_block_synced": 3,
+    "tracing_backend": "trace-dispatcher",
+    "tracer": true,
+    "verbatim": {}
+  },
+  "analysis": {
+    "type": "standard",
+    "cluster_base_startup_overhead_s": 40,
+    "start_log_spread_s": 120,
+    "last_log_spread_s": 120,
+    "silence_since_last_block_s": 120,
+    "tx_loss_ratio": 0.02,
+    "finish_patience": 21,
+    "filters": [],
+    "filter_exprs": [
+      {
+        "tag": "CBlock",
+        "contents": {
+          "tag": "BMinimumAdoptions",
+          "contents": 1
+        }
+      }
+    ],
+    "minimum_chain_density": 0.025,
+    "cluster_startup_overhead_s": 40
+  },
+  "tracer": {
+    "rtview": false,
+    "ekg": false,
+    "withresources": false
+  },
+  "desc": "Miniature dataset, CI-friendly duration, test scale",
+  "name": "ci-test-bage"
+}
