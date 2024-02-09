@@ -135,6 +135,12 @@ profilesMap = Tasty.testGroup
         (Right ans) -> do
           assertEqual
             ("Profile == (decode \"" ++ fp ++ "\")")
-            (Map.map (\p -> Types.composition p) Profiles.profiles)
-            (Map.map (\p -> Types.composition p) (ans :: Map.Map String Types.Profile))
+            (Map.map
+              (\p -> (Types.composition p, Types.tracer p))
+              Profiles.profiles
+            )
+            (Map.map
+              (\p -> (Types.composition p, Types.tracer p))
+              (ans :: Map.Map String Types.Profile)
+            )
   ]

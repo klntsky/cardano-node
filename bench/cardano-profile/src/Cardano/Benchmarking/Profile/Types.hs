@@ -53,13 +53,62 @@ instance Aeson.FromJSON Profile
 --------------------------------------------------------------------------------
 
 -- | A topology as it's used to define benchmarking profiles.
+{--
+
+TODO: Except "ci-test-dense10" fields n_hosts, n_pools, n_singular_pools and
+      n_pool_hosts always have the same same value!
+> wb profile all-profiles | jq 'map(select( .composition.n_hosts != .composition.n_pools ))' | jq 'map(.name)'
+[
+  "ci-test-dense10-shey",
+  "ci-test-dense10-alra",
+  "ci-test-dense10-mary",
+  "ci-test-dense10-alzo",
+  "ci-test-dense10-bage",
+  "ci-test-dense10-coay"
+]
+
+> wb profile all-profiles | jq 'map(select( .composition.n_pools != .composition.n_singular_pools ))' | jq 'map(.name)'
+[
+  "ci-test-dense10-shey",
+  "ci-test-dense10-alra",
+  "ci-test-dense10-mary",
+  "ci-test-dense10-alzo",
+  "ci-test-dense10-bage",
+  "ci-test-dense10-coay"
+]
+
+> wb profile all-profiles | jq 'map(select( .composition.n_singular_pools != .composition.n_pool_hosts ))' | jq 'map(.name)'
+[
+  "ci-test-dense10-shey",
+  "ci-test-dense10-alra",
+  "ci-test-dense10-mary",
+  "ci-test-dense10-alzo",
+  "ci-test-dense10-bage",
+  "ci-test-dense10-coay"
+]
+
+TODO: Except "ci-test-dense10" field n_dense_pools is always zero.
+> wb profile all-profiles | jq 'map(select( .composition.n_dense_pools != 0 ))' | jq 'map(.name)'
+[
+  "ci-test-dense10-shey",
+  "ci-test-dense10-alra",
+  "ci-test-dense10-mary",
+  "ci-test-dense10-alzo",
+  "ci-test-dense10-bage",
+  "ci-test-dense10-coay"
+]
+
+--}
 data Composition = Composition
   { locations :: [Topology.Location]
+  -- TODO: Remove, all profile have a zero here!
   , n_bft_hosts :: Int
   , n_singular_hosts :: Int
+  -- TODO: Zero for all profiles except "ci-test-dense10".
   , n_dense_hosts :: Int
+  -- TODO: One for all profiles except "ci-test-dense10".
   , dense_pool_density :: Int
-  -- TODO: Not used, remove!
+  -- TODO: Remove, all profile have a False here!
   , with_proxy :: Bool
   , with_explorer :: Bool
   , topology :: Topology
@@ -67,6 +116,7 @@ data Composition = Composition
   , n_hosts :: Int
   , n_pools :: Int
   , n_singular_pools :: Int
+  -- TODO: Zero for all profiles except "ci-test-dense10".
   , n_dense_pools :: Int
   , n_pool_hosts :: Int
   }
@@ -183,7 +233,7 @@ data Node = Node
   , shutdown_on_slot_synced :: Maybe Int
   , shutdown_on_block_synced :: Maybe Int
   , tracing_backend :: String
-  , nodeTracer :: Bool -- -- TODO: Rename in workbench/bash to "node_tracer"
+  , nodeTracer :: Bool -- -- TODO: Rename in workbench/bash to "node_tracer" (?)
   , verbatim :: Aeson.Object
   }
   deriving (Eq, Show, Generic)
