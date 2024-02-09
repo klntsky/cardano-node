@@ -10,7 +10,7 @@ module Cardano.Benchmarking.Profile.Types (
 , Era (..)
 , Genesis (..)
 , Scenario (..)
-, Node (..)
+, Node (..), NodeVerbatim (..)
 , Tracer (..)
 , Generator (..), Plutus (..)
 , Analysis (..), AnalysisFilterExpression (..), AnalysisFilterExpressionContent (..)
@@ -234,7 +234,7 @@ data Node = Node
   , shutdown_on_block_synced :: Maybe Int
   , tracing_backend :: String
   , nodeTracer :: Bool -- -- TODO: Rename in workbench/bash to "node_tracer" (?)
-  , verbatim :: Aeson.Object
+  , verbatim :: NodeVerbatim
   }
   deriving (Eq, Show, Generic)
 
@@ -254,6 +254,25 @@ instance Aeson.ToJSON Node where
 
 instance Aeson.FromJSON Node where
     parseJSON = Aeson.genericParseJSON nodeOptions
+
+data NodeVerbatim = NodeVerbatim
+  { enableP2P :: Maybe Bool
+  }
+  deriving (Eq, Show, Generic)
+
+-- TODO: Switch to lower-case in workbench/bash
+instance Aeson.ToJSON NodeVerbatim where
+  toJSON p@(NodeVerbatim _) =
+    Aeson.object
+      [ "EnableP2P"   Aeson..= enableP2P p
+      ]
+
+-- TODO: Switch to lower-case in workbench/bash
+instance Aeson.FromJSON NodeVerbatim where
+  parseJSON =
+    Aeson.withObject "NodeVerbatim" $ \o -> do
+      NodeVerbatim
+        <$> o Aeson..:? "EnableP2P"
 
 --------------------------------------------------------------------------------
 
@@ -281,6 +300,7 @@ data Generator = Generator
   , epochs :: Int
   , tps :: Scientific.Scientific
   , plutus :: Maybe Plutus
+  -- ($gtor.tx_count // ($generator_duration * $gtor.tps) | ceil)
   , tx_count :: Int
   }
   deriving (Eq, Show, Generic)

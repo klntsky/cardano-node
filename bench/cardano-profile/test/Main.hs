@@ -80,7 +80,7 @@ ciTestBage = Types.Profile {
     , Types.shutdown_on_block_synced = Just 3
     , Types.tracing_backend = "trace-dispatcher"
     , Types.nodeTracer = True
-    , Types.verbatim = mempty
+    , Types.verbatim = Types.NodeVerbatim Nothing
   }
   , Types.tracer = Types.Tracer {
       Types.rtview = False
@@ -136,11 +136,11 @@ profilesMap = Tasty.testGroup
           assertEqual
             ("Profile == (decode \"" ++ fp ++ "\")")
             (Map.map
-              (\p -> (Types.composition p, Types.tracer p))
+              (\p -> (Types.composition p, Types.node p, Types.tracer p))
               Profiles.profiles
             )
             (Map.map
-              (\p -> (Types.composition p, Types.tracer p))
+              (\p -> (Types.composition p, Types.node p, Types.tracer p))
               (ans :: Map.Map String Types.Profile)
             )
   ]
