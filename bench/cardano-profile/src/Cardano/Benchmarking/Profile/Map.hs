@@ -88,109 +88,154 @@ dummy = Types.Profile {
 profilesNoEra :: Map.Map String Types.Profile
 -- Names:
 -- wb profile all-profiles | jq .[] | jq -r .name | sort | uniq | grep "\-bage"
-profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p))
+profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
+  -- fast, "--shutdown-on-block-synced 1"
   [
-    (dummy { Types.name = "10",                                                   Types.composition = compTenner          , Types.node = (nodeDefault Nothing (Just 15))                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "10-notracer",                                          Types.composition = compTenner          , Types.node = nodeNoTracer (nodeDefault Nothing (Just 15))                       , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "10-p2p",                                               Types.composition = compTenner          , Types.node = nodeP2P (nodeDefault Nothing (Just 15))                            , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "10-plutus",                                            Types.composition = compTenner          , Types.node = (nodeDefault Nothing (Just 15))                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "chainsync-early-alonzo",                               Types.composition = compSoloChainsync   , Types.node = nodeNoTracer (nodeDefault (Just 38901589) Nothing)                 , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "chainsync-early-alonzo-notracer",                      Types.composition = compSoloChainsync   , Types.node = nodeNoTracer (nodeDefault (Just 38901589) Nothing)                 , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "chainsync-early-alonzo-oldtracing",                    Types.composition = compSoloChainsync   , Types.node = nodeOldTracing $ nodeNoTracer (nodeDefault (Just 38901589) Nothing), Types.tracer = tracerDefault})
-  , (dummy { Types.name = "chainsync-early-alonzo-p2p",                           Types.composition = compSoloChainsync   , Types.node = nodeNoTracer $ nodeP2P (nodeDefault (Just 38901589) Nothing)       , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "chainsync-early-byron",                                Types.composition = compSoloChainsync   , Types.node = nodeNoTracer (nodeDefault (Just 237599) Nothing)                   , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "chainsync-early-byron-notracer",                       Types.composition = compSoloChainsync   , Types.node = nodeNoTracer (nodeDefault (Just 237599) Nothing)                   , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "chainsync-early-byron-oldtracing",                     Types.composition = compSoloChainsync   , Types.node = nodeOldTracing $ nodeNoTracer (nodeDefault (Just 237599) Nothing)  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench",                                             Types.composition = compDoubletLoopback , Types.node = (nodeDefault Nothing (Just 15))                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-nomadperf",                                   Types.composition = compDoubletNomadPerf, Types.node = nodeP2P (nodeDefault Nothing (Just 15))                            , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-nomadperf-nop2p",                             Types.composition = compDoubletNomadPerf, Types.node = (nodeDefault Nothing (Just 15))                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-notracer",                                    Types.composition = compDoubletLoopback , Types.node = nodeNoTracer (nodeDefault Nothing (Just 15))                       , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-oldtracing-nomadperf",                        Types.composition = compDoubletNomadPerf, Types.node = nodeOldTracing (nodeDefault Nothing (Just 15))                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-p2p",                                         Types.composition = compDoubletLoopback , Types.node = nodeP2P (nodeDefault Nothing (Just 15))                            , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-plutus",                                      Types.composition = compDoubletLoopback , Types.node = (nodeDefault Nothing (Just 15))                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-plutus-secp-ecdsa",                           Types.composition = compDoubletLoopback , Types.node = (nodeDefault Nothing (Just 15))                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-plutus-secp-schnorr",                         Types.composition = compDoubletLoopback , Types.node = (nodeDefault Nothing (Just 15))                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-rtview",                                      Types.composition = compDoubletLoopback , Types.node = (nodeDefault Nothing (Just 15))                                    , Types.tracer = tracerRtview})
-  , (dummy { Types.name = "ci-test",                                              Types.composition = compDoubletLoopback , Types.node = (nodeDefault Nothing (Just 3))                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-dense10",                                      Types.composition = compSoloDense10     , Types.node = (nodeDefault Nothing (Just 3))                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-nomadperf",                                    Types.composition = compDoubletNomadPerf, Types.node = nodeP2P (nodeDefault Nothing (Just 3))                             , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-nomadperf-nop2p",                              Types.composition = compDoubletNomadPerf, Types.node = (nodeDefault Nothing (Just 3))                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-notracer",                                     Types.composition = compDoubletLoopback , Types.node = nodeNoTracer (nodeDefault Nothing (Just 3))                        , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-oldtracing-nomadperf",                         Types.composition = compDoubletNomadPerf, Types.node = nodeOldTracing (nodeDefault Nothing (Just 3))                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-p2p",                                          Types.composition = compDoubletLoopback , Types.node = nodeP2P (nodeDefault Nothing (Just 3))                             , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-plutus",                                       Types.composition = compDoubletLoopback , Types.node = (nodeDefault Nothing (Just 3))                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-rtview",                                       Types.composition = compDoubletLoopback , Types.node = (nodeDefault Nothing (Just 3))                                     , Types.tracer = tracerRtview})
-  , (dummy { Types.name = "default",                                              Types.composition = compHexagon         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "default-nomadperf",                                    Types.composition = compHexagonNomadPerf, Types.node = nodeP2P (nodeDefault Nothing Nothing)                              , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "default-nomadperf-nop2p",                              Types.composition = compHexagonNomadPerf, Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "default-p2p",                                          Types.composition = compHexagon         , Types.node = nodeP2P (nodeDefault Nothing Nothing)                              , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "devops",                                               Types.composition = compHexagon         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish-10M",                                             Types.composition = compTriplet         , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish-10M-plutus",                                      Types.composition = compTriplet         , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish",                                                 Types.composition = compTriplet         , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish-plutus",                                          Types.composition = compTriplet         , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "epoch-transition",                                     Types.composition = compDoubletLoopback , Types.node = (nodeDefault (Just 900) Nothing)                                   , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "fast",                                                 Types.composition = compDoubletLoopback , Types.node = (nodeDefault Nothing (Just 1))                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "fast-notracer",                                        Types.composition = compDoubletLoopback , Types.node = nodeNoTracer (nodeDefault Nothing (Just 1))                        , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "fast-oldtracing",                                      Types.composition = compDoubletLoopback , Types.node = nodeOldTracing (nodeDefault Nothing (Just 1))                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "fast-p2p",                                             Types.composition = compDoubletLoopback , Types.node = nodeP2P (nodeDefault Nothing (Just 1))                             , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "fast-plutus",                                          Types.composition = compDoubletLoopback , Types.node = (nodeDefault Nothing (Just 1))                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress",                                         Types.composition = compTriplet         , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-large",                                   Types.composition = compHexagon         , Types.node = (nodeDefault (Just 4800) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-light",                                   Types.composition = compTriplet         , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-notracer",                                Types.composition = compTriplet         , Types.node = nodeNoTracer (nodeDefault (Just 2400) Nothing)                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-p2p",                                     Types.composition = compTriplet         , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-plutus",                                  Types.composition = compTriplet         , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-plutus-solo",                             Types.composition = compSolo            , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre",                                     Types.composition = compTriplet         , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-notracer",                            Types.composition = compTriplet         , Types.node = nodeNoTracer (nodeDefault (Just 2400) Nothing)                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-plutus",                              Types.composition = compTriplet         , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsA4m",                              Types.composition = compTriplet         , Types.node = nodeRtsA4m (nodeDefault (Just 2400) Nothing)                       , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsA4mN3",                            Types.composition = compTriplet         , Types.node = nodeRtsA4mN3 (nodeDefault (Just 2400) Nothing)                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsA64m",                             Types.composition = compTriplet         , Types.node = nodeRtsA64m (nodeDefault (Just 2400) Nothing)                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsA64mN3",                           Types.composition = compTriplet         , Types.node = nodeRtsA64mN3 (nodeDefault (Just 2400) Nothing)                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsN3",                               Types.composition = compTriplet         , Types.node = nodeRtsN3 (nodeDefault (Just 2400) Nothing)                        , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsxn",                               Types.composition = compTriplet         , Types.node = nodeRtsXn (nodeDefault (Just 2400) Nothing)                        , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-solo",                                Types.composition = compSolo            , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-solo",                                    Types.composition = compSolo            , Types.node = (nodeDefault (Just 2400) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "idle",                                                 Types.composition = compHexagon         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "k3-3ep-18kTx-10000kU-1300kD-64kbs-10tps-fixed-loaded", Types.composition = compTriplet         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "k3-3ep-22kTx-10000kU-1300kD-64kbs-fixed-loaded",       Types.composition = compTriplet         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "k3-3ep-5kTx-10000kU-1300kD-64kbs-fixed-loaded",        Types.composition = compTriplet         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "k3-3ep-9kTx-10000kU-1300kD-64kbs-5tps-fixed-loaded",   Types.composition = compTriplet         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "model-secp-ecdsa-double",                              Types.composition = compQuadruplet      , Types.node = (nodeDefault (Just 56000) Nothing)                                 , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "model-secp-ecdsa-half",                                Types.composition = compQuadruplet      , Types.node = (nodeDefault (Just 56000) Nothing)                                 , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "model-secp-ecdsa-plain",                               Types.composition = compQuadruplet      , Types.node = (nodeDefault (Just 56000) Nothing)                                 , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "model-value",                                          Types.composition = compQuadruplet      , Types.node = (nodeDefault (Just 56000) Nothing)                                 , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "model-value-test",                                     Types.composition = compQuadruplet      , Types.node = (nodeDefault (Just 56000) Nothing)                                 , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "oldtracing",                                           Types.composition = compHexagon         , Types.node = nodeOldTracing (nodeDefault Nothing Nothing)                       , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "oldtracing-nomadperf",                                 Types.composition = compHexagonNomadPerf, Types.node = nodeOldTracing $ nodeP2P (nodeDefault Nothing Nothing)             , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "oldtracing-nomadperf-nop2p",                           Types.composition = compHexagonNomadPerf, Types.node = nodeOldTracing (nodeDefault Nothing Nothing)                       , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutus",                                               Types.composition = compHexagon         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-loop-double",                               Types.composition = compHexagon         , Types.node = (nodeDefault (Just 9000) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-loop-half",                                 Types.composition = compHexagon         , Types.node = (nodeDefault (Just 9000) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-loop-plain",                                Types.composition = compHexagon         , Types.node = (nodeDefault (Just 9000) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-ecdsa-double",                         Types.composition = compHexagon         , Types.node = (nodeDefault (Just 9000) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-ecdsa-half",                           Types.composition = compHexagon         , Types.node = (nodeDefault (Just 9000) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-ecdsa-plain",                          Types.composition = compHexagon         , Types.node = (nodeDefault (Just 9000) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-schnorr-double",                       Types.composition = compHexagon         , Types.node = (nodeDefault (Just 9000) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-schnorr-half",                         Types.composition = compHexagon         , Types.node = (nodeDefault (Just 9000) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-schnorr-plain",                        Types.composition = compHexagon         , Types.node = (nodeDefault (Just 9000) Nothing)                                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutus-nomadperf",                                     Types.composition = compComposeFiftyTwo , Types.node = nodeP2P (nodeDefault (Just 72000) Nothing)                         , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutus-nomadperf-nop2p",                               Types.composition = compComposeFiftyTwo , Types.node = (nodeDefault (Just 72000) Nothing)                                 , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutus-secp-ecdsa",                                    Types.composition = compHexagon         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutus-secp-schnorr",                                  Types.composition = compHexagon         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "trace-bench",                                          Types.composition = compHexagonTorus    , Types.node = (nodeDefault Nothing (Just 15))                                    , Types.tracer = tracerWithresources})
-  , (dummy { Types.name = "trace-bench-notracer",                                 Types.composition = compHexagonTorus    , Types.node = nodeNoTracer (nodeDefault Nothing (Just 15))                       , Types.tracer = tracerWithresources})
-  , (dummy { Types.name = "trace-bench-oldtracing",                               Types.composition = compHexagonTorus    , Types.node = nodeOldTracing (nodeDefault Nothing (Just 15))                     , Types.tracer = tracerWithresources})
-  , (dummy { Types.name = "trace-bench-rtview",                                   Types.composition = compHexagonTorus    , Types.node = (nodeDefault Nothing (Just 15))                                    , Types.tracer = tracerRtviewWithresources})
-  , (dummy { Types.name = "trace-full",                                           Types.composition = compHexagonTorus    , Types.node = (nodeDefault (Just 1200) Nothing)                                  , Types.tracer = tracerWithresources})
-  , (dummy { Types.name = "trace-full-rtview",                                    Types.composition = compHexagonTorus    , Types.node = (nodeDefault (Just 1200) Nothing)                                  , Types.tracer = tracerRtviewWithresources})
-  , (dummy { Types.name = "tracer-only",                                          Types.composition = compHexagon         , Types.node = (nodeDefault Nothing Nothing)                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "value-nomadperf",                                      Types.composition = compComposeFiftyTwo , Types.node = nodeP2P (nodeDefault (Just 64000) Nothing)                         , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "value-nomadperf-nop2p",                                Types.composition = compComposeFiftyTwo , Types.node = (nodeDefault (Just 64000) Nothing)                                 , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "value-oldtracing-nomadperf",                           Types.composition = compComposeFiftyTwo , Types.node = nodeOldTracing $ nodeP2P (nodeDefault (Just 64000) Nothing)        , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "value-oldtracing-nomadperf-nop2p",                     Types.composition = compComposeFiftyTwo , Types.node = nodeOldTracing (nodeDefault (Just 64000) Nothing)                  , Types.tracer = tracerDefault})
+    (dummy { Types.name = "fast",                                                 Types.composition = compDoubletLoopback , Types.node = nodeFast                                      , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "fast-notracer",                                        Types.composition = compDoubletLoopback , Types.node = nodeNoTracer nodeFast                         , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "fast-oldtracing",                                      Types.composition = compDoubletLoopback , Types.node = nodeOldTracing nodeFast                       , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "fast-p2p",                                             Types.composition = compDoubletLoopback , Types.node = nodeP2P nodeFast                              , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "fast-plutus",                                          Types.composition = compDoubletLoopback , Types.node = nodeFast                                      , Types.tracer = tracerDefault})
+  ]
+  ++
+  -- ci-test, "--shutdown-on-block-synced 3"
+  [
+    (dummy { Types.name = "ci-test-dense10",                                      Types.composition = compSoloDense10     , Types.node = nodeTest                                      , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-test",                                              Types.composition = compDoubletLoopback , Types.node = nodeTest                                      , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-test-notracer",                                     Types.composition = compDoubletLoopback , Types.node = nodeNoTracer nodeTest                         , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-test-p2p",                                          Types.composition = compDoubletLoopback , Types.node = nodeP2P nodeTest                              , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-test-plutus",                                       Types.composition = compDoubletLoopback , Types.node = nodeTest                                      , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-test-rtview",                                       Types.composition = compDoubletLoopback , Types.node = nodeTest                                      , Types.tracer = tracerRtview})
+  , (dummy { Types.name = "ci-test-nomadperf",                                    Types.composition = compDoubletNomadPerf, Types.node = nodeP2P nodeTest                              , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-test-nomadperf-nop2p",                              Types.composition = compDoubletNomadPerf, Types.node = nodeTest                                      , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-test-oldtracing-nomadperf",                         Types.composition = compDoubletNomadPerf, Types.node = nodeOldTracing nodeTest                       , Types.tracer = tracerDefault})
+  ]
+  ++
+  -- ci-bench, "--shutdown-on-block-synced 15"
+  [
+    (dummy { Types.name = "ci-bench",                                             Types.composition = compDoubletLoopback , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-bench-notracer",                                    Types.composition = compDoubletLoopback , Types.node = nodeNoTracer nodeBench                        , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-bench-p2p",                                         Types.composition = compDoubletLoopback , Types.node = nodeP2P nodeBench                             , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-bench-plutus",                                      Types.composition = compDoubletLoopback , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-bench-plutus-secp-ecdsa",                           Types.composition = compDoubletLoopback , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-bench-plutus-secp-schnorr",                         Types.composition = compDoubletLoopback , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-bench-rtview",                                      Types.composition = compDoubletLoopback , Types.node = nodeBench                                     , Types.tracer = tracerRtview})
+  , (dummy { Types.name = "ci-bench-nomadperf",                                   Types.composition = compDoubletNomadPerf, Types.node = nodeP2P nodeBench                             , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-bench-nomadperf-nop2p",                             Types.composition = compDoubletNomadPerf, Types.node = nodeBench                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "ci-bench-oldtracing-nomadperf",                        Types.composition = compDoubletNomadPerf, Types.node = nodeOldTracing nodeBench                      , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "trace-bench",                                          Types.composition = compHexagonTorus    , Types.node = nodeBench                                     , Types.tracer = tracerWithresources})
+  , (dummy { Types.name = "trace-bench-notracer",                                 Types.composition = compHexagonTorus    , Types.node = nodeNoTracer nodeBench                        , Types.tracer = tracerWithresources})
+  , (dummy { Types.name = "trace-bench-oldtracing",                               Types.composition = compHexagonTorus    , Types.node = nodeOldTracing nodeBench                      , Types.tracer = tracerWithresources})
+  , (dummy { Types.name = "trace-bench-rtview",                                   Types.composition = compHexagonTorus    , Types.node = nodeBench                                     , Types.tracer = tracerRtviewWithresources})
+  , (dummy { Types.name = "10",                                                   Types.composition = compTenner          , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "10-notracer",                                          Types.composition = compTenner          , Types.node = nodeNoTracer nodeBench                        , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "10-p2p",                                               Types.composition = compTenner          , Types.node = nodeP2P nodeBench                             , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "10-plutus",                                            Types.composition = compTenner          , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
+  ]
+  ++
+  [
+    (dummy { Types.name = "chainsync-early-alonzo",                               Types.composition = compSoloChainsync   , Types.node = nodeNoTracer nodeChainSyncAlo                 , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "chainsync-early-alonzo-notracer",                      Types.composition = compSoloChainsync   , Types.node = nodeNoTracer nodeChainSyncAlo                 , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "chainsync-early-alonzo-oldtracing",                    Types.composition = compSoloChainsync   , Types.node = nodeOldTracing $ nodeNoTracer nodeChainSyncAlo, Types.tracer = tracerDefault})
+  ]
+  ++
+  [
+    (dummy { Types.name = "chainsync-early-alonzo-p2p",                           Types.composition = compSoloChainsync   , Types.node = nodeNoTracer $ nodeP2P nodeChainSyncAlo       , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "chainsync-early-byron",                                Types.composition = compSoloChainsync   , Types.node = nodeNoTracer nodeChainSyncByr                 , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "chainsync-early-byron-notracer",                       Types.composition = compSoloChainsync   , Types.node = nodeNoTracer nodeChainSyncByr                 , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "chainsync-early-byron-oldtracing",                     Types.composition = compSoloChainsync   , Types.node = nodeOldTracing $ nodeNoTracer nodeChainSyncByr, Types.tracer = tracerDefault})
+  ]
+  ++
+  -- No "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
+  [
+    (dummy { Types.name = "k3-3ep-18kTx-10000kU-1300kD-64kbs-10tps-fixed-loaded", Types.composition = compTriplet         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "k3-3ep-22kTx-10000kU-1300kD-64kbs-fixed-loaded",       Types.composition = compTriplet         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "k3-3ep-5kTx-10000kU-1300kD-64kbs-fixed-loaded",        Types.composition = compTriplet         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "k3-3ep-9kTx-10000kU-1300kD-64kbs-5tps-fixed-loaded",   Types.composition = compTriplet         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "default",                                              Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "default-p2p",                                          Types.composition = compHexagon         , Types.node = nodeP2P nodeNoStop                            , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "devops",                                               Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "idle",                                                 Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "oldtracing",                                           Types.composition = compHexagon         , Types.node = nodeOldTracing nodeNoStop                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutus",                                               Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutus-secp-ecdsa",                                    Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutus-secp-schnorr",                                  Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "tracer-only",                                          Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "default-nomadperf",                                    Types.composition = compHexagonNomadPerf, Types.node = nodeP2P nodeNoStop                            , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "default-nomadperf-nop2p",                              Types.composition = compHexagonNomadPerf, Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "oldtracing-nomadperf",                                 Types.composition = compHexagonNomadPerf, Types.node = nodeOldTracing $ nodeP2P nodeNoStop           , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "oldtracing-nomadperf-nop2p",                           Types.composition = compHexagonNomadPerf, Types.node = nodeOldTracing nodeNoStop                     , Types.tracer = tracerDefault})
+  ]
+  ++
+  -- nodeForgeStress, "--shutdown-on-slot-synced 2400"
+  [
+    (dummy { Types.name = "forge-stress-plutus-solo",                             Types.composition = compSolo            , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-pre-solo",                                Types.composition = compSolo            , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-solo",                                    Types.composition = compSolo            , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress",                                         Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-light",                                   Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-notracer",                                Types.composition = compTriplet         , Types.node = nodeNoTracer nodeForgeStress                  , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-p2p",                                     Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-plutus",                                  Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-pre",                                     Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-pre-notracer",                            Types.composition = compTriplet         , Types.node = nodeNoTracer nodeForgeStress                  , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-pre-plutus",                              Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-pre-rtsA4m",                              Types.composition = compTriplet         , Types.node = nodeRtsA4m nodeForgeStress                    , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-pre-rtsA4mN3",                            Types.composition = compTriplet         , Types.node = nodeRtsA4mN3 nodeForgeStress                  , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-pre-rtsA64m",                             Types.composition = compTriplet         , Types.node = nodeRtsA64m nodeForgeStress                   , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-pre-rtsA64mN3",                           Types.composition = compTriplet         , Types.node = nodeRtsA64mN3 nodeForgeStress                 , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-pre-rtsN3",                               Types.composition = compTriplet         , Types.node = nodeRtsN3 nodeForgeStress                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "forge-stress-pre-rtsxn",                               Types.composition = compTriplet         , Types.node = nodeRtsXn nodeForgeStress                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "dish-10M",                                             Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "dish-10M-plutus",                                      Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "dish",                                                 Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "dish-plutus",                                          Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  ]
+  ++
+  -- nodeForgeStress2x, "--shutdown-on-slot-synced 4800"
+  [
+    (dummy { Types.name = "forge-stress-large",                                   Types.composition = compHexagon         , Types.node = nodeForgeStress2x                             , Types.tracer = tracerDefault})
+  ]
+  ++
+  [
+    (dummy { Types.name = "epoch-transition",                                     Types.composition = compDoubletLoopback , Types.node = nodeEpochTransition                           , Types.tracer = tracerDefault})
+  ]
+  ++
+  [
+    (dummy { Types.name = "model-secp-ecdsa-double",                              Types.composition = compQuadruplet      , Types.node = nodeModel                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "model-secp-ecdsa-half",                                Types.composition = compQuadruplet      , Types.node = nodeModel                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "model-secp-ecdsa-plain",                               Types.composition = compQuadruplet      , Types.node = nodeModel                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "model-value",                                          Types.composition = compQuadruplet      , Types.node = nodeModel                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "model-value-test",                                     Types.composition = compQuadruplet      , Types.node = nodeModel                                     , Types.tracer = tracerDefault})
+  ]
+  ++
+  [
+    (dummy { Types.name = "plutuscall-loop-double",                               Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutuscall-loop-half",                                 Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutuscall-loop-plain",                                Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutuscall-secp-ecdsa-double",                         Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutuscall-secp-ecdsa-half",                           Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutuscall-secp-ecdsa-plain",                          Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutuscall-secp-schnorr-double",                       Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutuscall-secp-schnorr-half",                         Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutuscall-secp-schnorr-plain",                        Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
+  ]
+  ++
+  [
+    (dummy { Types.name = "plutus-nomadperf",                                     Types.composition = compComposeFiftyTwo , Types.node = nodeP2P nodePlutus                            , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutus-nomadperf-nop2p",                               Types.composition = compComposeFiftyTwo , Types.node = nodePlutus                                    , Types.tracer = tracerDefault})
+  ]
+  ++
+  [
+    (dummy { Types.name = "trace-full",                                           Types.composition = compHexagonTorus    , Types.node = nodeTraceFull                                 , Types.tracer = tracerWithresources})
+  , (dummy { Types.name = "trace-full-rtview",                                    Types.composition = compHexagonTorus    , Types.node = nodeTraceFull                                 , Types.tracer = tracerRtviewWithresources})
+  ]
+  ++
+  [
+    (dummy { Types.name = "value-nomadperf",                                      Types.composition = compComposeFiftyTwo , Types.node = nodeP2P nodeValue                             , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "value-nomadperf-nop2p",                                Types.composition = compComposeFiftyTwo , Types.node = nodeValue                                     , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "value-oldtracing-nomadperf",                           Types.composition = compComposeFiftyTwo , Types.node = nodeOldTracing $ nodeP2P nodeValue            , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "value-oldtracing-nomadperf-nop2p",                     Types.composition = compComposeFiftyTwo , Types.node = nodeOldTracing nodeValue                      , Types.tracer = tracerDefault})
   ]
 
 --------------------------------------------------------------------------------
@@ -727,6 +772,61 @@ nodeDefault maybeSlotShutdown maybeBlockShutdown = Types.Node {
 , Types.nodeTracer = True
 , Types.verbatim = Types.NodeVerbatim Nothing
 }
+
+nodeNoStop :: Types.Node
+nodeNoStop = nodeDefault Nothing Nothing
+
+-- Shutdown on slot 900
+nodeEpochTransition :: Types.Node
+nodeEpochTransition = nodeDefault (Just 900) Nothing
+
+-- Shutdown on slot 1200
+nodeTraceFull :: Types.Node
+nodeTraceFull = nodeDefault (Just 1200) Nothing
+
+-- Shutdown on slot 2400
+nodeForgeStress :: Types.Node
+nodeForgeStress = nodeDefault (Just 2400) Nothing
+
+-- Shutdown on slot 4800
+nodeForgeStress2x :: Types.Node
+nodeForgeStress2x = nodeDefault (Just 4800) Nothing
+
+-- Shutdown on slot 9000
+nodePlutusCall :: Types.Node
+nodePlutusCall = nodeDefault (Just 9000) Nothing
+
+-- Shutdown on slot 56000
+nodeModel :: Types.Node
+nodeModel = nodeDefault (Just 56000) Nothing
+
+-- Shutdown on slot 64000
+nodeValue :: Types.Node
+nodeValue = nodeDefault (Just 64000) Nothing
+
+-- Shutdown on slot 72000
+nodePlutus :: Types.Node
+nodePlutus = nodeDefault (Just 72000) Nothing
+
+-- Shutdown on slot 237599
+nodeChainSyncByr :: Types.Node
+nodeChainSyncByr = nodeDefault (Just 237599) Nothing
+
+-- Shutdown on slot 38901589
+nodeChainSyncAlo :: Types.Node
+nodeChainSyncAlo = nodeDefault (Just 38901589) Nothing
+
+-- Shutdown on block 1
+nodeFast :: Types.Node
+nodeFast = nodeDefault Nothing (Just 1)
+
+-- Shutdown on block 3
+nodeTest :: Types.Node
+nodeTest = nodeDefault Nothing (Just 3)
+
+-- Shutdown on block 15
+nodeBench :: Types.Node
+nodeBench = nodeDefault Nothing (Just 15)
 
 {-- Use by:
 wb profile all-profiles | jq 'map(select( .node.tracer == false ))' | jq .[] | jq -r '.name' | grep "\-coay" | sort
