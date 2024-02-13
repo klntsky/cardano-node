@@ -133,34 +133,75 @@ profilesMap = Tasty.testGroup
       case eitherAns of
         (Left err) -> fail err
         (Right ans) -> do
+          -- Check all keys first (without this what's below makes no sense!)
           assertEqual
-            ("Profile == (decode \"" ++ fp ++ "\")")
+            ("Profile == (decode \"" ++ fp ++ "\") - Keys")
+            (Map.keys Profiles.profiles)
+            (Map.keys (ans :: Map.Map String Types.Profile))
+          -- Check names.
+          assertEqual
+            ("Profile == (decode \"" ++ fp ++ "\") - Name")
             (Map.map
-              (\p -> Types.composition p)
+              (\p -> Types.name p)
               Profiles.profiles
             )
             (Map.map
-              (\p -> Types.composition p)
+              (\p -> Types.name p)
               (ans :: Map.Map String Types.Profile)
             )
-          assertEqual
-            ("Profile == (decode \"" ++ fp ++ "\")")
-            (Map.map
-              (\p -> Types.node p)
-              Profiles.profiles
+{--
+          mapM_
+            (uncurry $ assertEqual
+              ("Profile == (decode \"" ++ fp ++ "\") - Composition")
             )
-            (Map.map
-              (\p -> Types.node p)
-              (ans :: Map.Map String Types.Profile)
+            (zip
+              (Map.assocs Profiles.profiles)
+              (Map.assocs (ans :: Map.Map String Types.Profile))
             )
-          assertEqual
-            ("Profile == (decode \"" ++ fp ++ "\")")
-            (Map.map
-              (\p -> Types.tracer p)
-              Profiles.profiles
+--}
+          -- Show the first profile with differences in the Composition type.
+          mapM_
+            (uncurry $ assertEqual
+              ("Profile == (decode \"" ++ fp ++ "\") - Composition")
             )
-            (Map.map
-              (\p -> Types.tracer p)
-              (ans :: Map.Map String Types.Profile)
+            -- Map.Map to keep the key / profile name.
+            (zip
+              (Map.assocs $ Map.map
+                (\p -> Types.composition p) Profiles.profiles
+              )
+              (Map.assocs $ Map.map
+                (\p -> Types.composition p)
+                (ans :: Map.Map String Types.Profile)
+              )
+            )
+          -- Show the first profile with differences in the Node type.
+          mapM_
+            (uncurry $ assertEqual
+              ("Profile == (decode \"" ++ fp ++ "\") - Node")
+            )
+            -- Map.Map to keep the key / profile name.
+            (zip
+              (Map.assocs $ Map.map
+                (\p -> Types.node p) Profiles.profiles
+              )
+              (Map.assocs $ Map.map
+                (\p -> Types.node p)
+                (ans :: Map.Map String Types.Profile)
+              )
+            )
+          -- Show the first profile with differences in the Tracer type.
+          mapM_
+            (uncurry $ assertEqual
+              ("Profile == (decode \"" ++ fp ++ "\") - Tracer")
+            )
+            -- Map.Map to keep the key / profile name.
+            (zip
+              (Map.assocs $ Map.map
+                (\p -> Types.tracer p) Profiles.profiles
+              )
+              (Map.assocs $ Map.map
+                (\p -> Types.tracer p)
+                (ans :: Map.Map String Types.Profile)
+              )
             )
   ]
