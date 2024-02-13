@@ -147,6 +147,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                . P.fixedLoaded . P.generatorTps 15
                . P.shutdownOnBlock 3
                . P.analysisStandard
+      -- TODO: Why are not both using UniCircle ????
       ciTestLocal     = ciTest & P.uniCircle . P.loopback
       ciTestNomadPerf = ciTest & P.torus     . P.nomadPerf . P.withExplorer
   in [
@@ -167,32 +168,33 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                & P.fixedLoaded . P.generatorTps 15
                . P.shutdownOnBlock 15
                . P.analysisStandard
-      ciBench2  = ciBench & P.hosts  2
-      ciBench6  = ciBench & P.hosts  6
-      ciBench10 = ciBench & P.hosts 10
-      ciBench2Local     = ciBench2  & P.uniCircle . P.loopback
-      ciBench2NomadPerf = ciBench2  & P.torus     . P.nomadPerf . P.withExplorer
-      ciBench6Trace     = ciBench6  & P.torus     . P.loopback  . P.tracerWithresources
-      ciBench10Local    = ciBench10 & P.uniCircle . P.loopback
+      ciBench02  = ciBench & P.hosts  2
+      ciBench06  = ciBench & P.hosts  6
+      ciBench10  = ciBench & P.hosts 10
+      -- TODO: Why are not all using UniCircle ????
+      ciBench02Local     = ciBench02 & P.uniCircle . P.loopback
+      ciBench02NomadPerf = ciBench02 & P.torus     . P.nomadPerf . P.withExplorer
+      ciBench06Trace     = ciBench06 & P.torus     . P.loopback  . P.tracerWithresources
+      ciBench10Local     = ciBench10 & P.uniCircle . P.loopback
   in [
-    (ciBench2Local     & P.name "ci-bench"                      . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench2Local     & P.name "ci-bench-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                 )
-  , (ciBench2Local     & P.name "ci-bench-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
-  , (ciBench2Local     & P.name "ci-bench-plutus"               . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench2Local     & P.name "ci-bench-plutus-secp-ecdsa"    . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench2Local     & P.name "ci-bench-plutus-secp-schnorr"  . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench2Local     & P.name "ci-bench-rtview"               . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
-  , (ciBench2NomadPerf & P.name "ci-bench-nomadperf"            . P.tracerOn  . P.newTracing . P.p2pOn                  )
-  , (ciBench2NomadPerf & P.name "ci-bench-nomadperf-nop2p"      . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench2NomadPerf & P.name "ci-bench-oldtracing-nomadperf" . P.tracerOn  . P.oldTracing . P.p2pOff                 )
-  , (ciBench6Trace     & P.name "trace-bench"                   . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench6Trace     & P.name "trace-bench-oldtracing"        . P.tracerOn  . P.oldTracing . P.p2pOff                 )
-  , (ciBench6Trace     & P.name "trace-bench-rtview"            . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
-  , (ciBench6Trace     & P.name "trace-bench-notracer"          . P.tracerOff . P.newTracing . P.p2pOff                 )
-  , (ciBench10Local    & P.name "10"                            . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench10Local    & P.name "10-plutus"                     . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench10Local    & P.name "10-p2p"                        . P.tracerOn  . P.newTracing . P.p2pOn                  )
-  , (ciBench10Local    & P.name "10-notracer"                   . P.tracerOff . P.newTracing . P.p2pOff                 )
+    (ciBench02Local     & P.name "ci-bench"                      . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench02Local     & P.name "ci-bench-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                 )
+  , (ciBench02Local     & P.name "ci-bench-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
+  , (ciBench02Local     & P.name "ci-bench-plutus"               . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench02Local     & P.name "ci-bench-plutus-secp-ecdsa"    . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench02Local     & P.name "ci-bench-plutus-secp-schnorr"  . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench02Local     & P.name "ci-bench-rtview"               . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
+  , (ciBench02NomadPerf & P.name "ci-bench-nomadperf"            . P.tracerOn  . P.newTracing . P.p2pOn                  )
+  , (ciBench02NomadPerf & P.name "ci-bench-nomadperf-nop2p"      . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench02NomadPerf & P.name "ci-bench-oldtracing-nomadperf" . P.tracerOn  . P.oldTracing . P.p2pOff                 )
+  , (ciBench06Trace     & P.name "trace-bench"                   . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench06Trace     & P.name "trace-bench-oldtracing"        . P.tracerOn  . P.oldTracing . P.p2pOff                 )
+  , (ciBench06Trace     & P.name "trace-bench-rtview"            . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
+  , (ciBench06Trace     & P.name "trace-bench-notracer"          . P.tracerOff . P.newTracing . P.p2pOff                 )
+  , (ciBench10Local     & P.name "10"                            . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench10Local     & P.name "10-plutus"                     . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench10Local     & P.name "10-p2p"                        . P.tracerOn  . P.newTracing . P.p2pOn                  )
+  , (ciBench10Local     & P.name "10-notracer"                   . P.tracerOff . P.newTracing . P.p2pOff                 )
   ]
   ++
   [
