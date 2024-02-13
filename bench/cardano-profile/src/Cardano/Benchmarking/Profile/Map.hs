@@ -118,9 +118,9 @@ profilesNoEra :: Map.Map String Types.Profile
 -- Names:
 -- wb profile all-profiles | jq .[] | jq -r .name | sort | uniq | grep "\-bage"
 profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
-  ------------------------------------------------------
-  -- fast: FixedLoaded and"--shutdown-on-block-synced 1"
-  ------------------------------------------------------
+  ----------------------------------------------------------------
+  -- fast: 2 nodes, FixedLoaded and "--shutdown-on-block-synced 1"
+  ----------------------------------------------------------------
   let fast =   dummy
              & P.uniCircle . P.hosts 2
              . P.loopback
@@ -135,9 +135,9 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   , (fast & P.name "fast-notracer"   . P.tracerOff . P.newTracing          )
   ]
   ++
-  ----------------------------------------------------------
-  -- ci-test: FixedLoaded and "--shutdown-on-block-synced 3"
-  ----------------------------------------------------------
+  -------------------------------------------------------------------
+  -- ci-test: 2 nodes, FixedLoaded and "--shutdown-on-block-synced 3"
+  -------------------------------------------------------------------
   [
     (dummy { Types.name = "ci-test-dense10",                                      Types.composition = compSoloDense10     , Types.node = nodeTest                                      , Types.tracer = tracerDefault})
   ]
@@ -149,7 +149,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                . P.analysisStandard
       -- TODO: Why are not both using UniCircle ????
       ciTestLocal     = ciTest & P.uniCircle . P.loopback
-      ciTestNomadPerf = ciTest & P.torus     . P.nomadPerf . P.withExplorer
+      ciTestNomadPerf = ciTest & P.torus     . P.nomadPerf . P.withExplorerNode
   in [
     (ciTestLocal     & P.name "ci-test"                      . P.tracerOn  . P.newTracing . P.p2pOff                 )
   , (ciTestLocal     & P.name "ci-test-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
@@ -173,7 +173,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
       ciBench10  = ciBench & P.hosts 10
       -- TODO: Why are not all using UniCircle ????
       ciBench02Local     = ciBench02 & P.uniCircle . P.loopback
-      ciBench02NomadPerf = ciBench02 & P.torus     . P.nomadPerf . P.withExplorer
+      ciBench02NomadPerf = ciBench02 & P.torus     . P.nomadPerf . P.withExplorerNode
       ciBench06Trace     = ciBench06 & P.torus     . P.loopback  . P.tracerWithresources
       ciBench10Local     = ciBench10 & P.uniCircle . P.loopback
   in [
@@ -195,6 +195,59 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   , (ciBench10Local     & P.name "10-plutus"                     . P.tracerOn  . P.newTracing . P.p2pOff                 )
   , (ciBench10Local     & P.name "10-p2p"                        . P.tracerOn  . P.newTracing . P.p2pOn                  )
   , (ciBench10Local     & P.name "10-notracer"                   . P.tracerOff . P.newTracing . P.p2pOff                 )
+  ]
+  ++
+    ------------------------------------------------------------
+  -- forge-stress
+    ------------------------------------------------------------
+  let forgeStress =   dummy
+                    & P.uniCircle
+                    . P.loopback
+                    . P.fixedLoaded . P.generatorTps 15
+                    . P.analysisStandard
+      -- "--shutdown-on-slot-synced 2400"
+      forgeStressSmall = forgeStress & P.shutdownOnSlot 2400
+      -- "--shutdown-on-slot-synced 4800"
+      forgeStressLarge = forgeStress & P.shutdownOnSlot 4800
+  in [
+  -- 1 node versions.
+    (forgeStressSmall & P.name "forge-stress-solo"          . P.hosts 1 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStressSmall & P.name "forge-stress-pre-solo"      . P.hosts 1 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStressSmall & P.name "forge-stress-plutus-solo"   . P.hosts 1 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  -- 3 nodes versions.
+  , (forgeStressSmall & P.name "forge-stress"               . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStressSmall & P.name "forge-stress-light"         . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStressSmall & P.name "forge-stress-notracer"      . P.hosts 3 . P.tracerOff . P.newTracing . P.p2pOff                                       )
+  -- TODO: FIXME: "forge-stress-p2p" has no P2P enabled!
+  , (forgeStressSmall & P.name "forge-stress-p2p"           . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStressSmall & P.name "forge-stress-plutus"        . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStressSmall & P.name "forge-stress-pre"           . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStressSmall & P.name "forge-stress-pre-notracer"  . P.hosts 3 . P.tracerOff . P.newTracing . P.p2pOff                                       )
+  , (forgeStressSmall & P.name "forge-stress-pre-plutus"    . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsA4m"    . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcAllocSize  4)
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsA4mN3"  . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3 . P.rtsGcAllocSize  4)
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsA64m"   . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcAllocSize 64)
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsA64mN3" . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3 . P.rtsGcAllocSize 64)
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsN3"     . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3                      )
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsxn"     . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcNonMoving   )
+  -- Double nodes and time running version.
+  , (forgeStressLarge & P.name "forge-stress-large"         . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  ]
+  ++
+  -- TODO: This is a special case of forge-stress. Mix both? Still used?
+  let dish =   dummy
+             & P.uniCircle . P.hosts 3
+             . P.p2pOff
+             . P.loopback
+             . P.fixedLoaded . P.generatorTps 15
+             . P.shutdownOnSlot 2400
+             . P.tracerOn  . P.newTracing
+             . P.analysisStandard
+  in [
+    (dish & P.name "dish"            )
+  , (dish & P.name "dish-plutus"     )
+  , (dish & P.name "dish-10M"        )
+  , (dish & P.name "dish-10M-plutus" )
   ]
   ++
   [
@@ -229,46 +282,6 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   , (dummy { Types.name = "default-nomadperf-nop2p",                              Types.composition = compHexagonNomadPerf, Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
   , (dummy { Types.name = "oldtracing-nomadperf",                                 Types.composition = compHexagonNomadPerf, Types.node = nodeOldTracing $ nodeP2P nodeNoStop           , Types.tracer = tracerDefault})
   , (dummy { Types.name = "oldtracing-nomadperf-nop2p",                           Types.composition = compHexagonNomadPerf, Types.node = nodeOldTracing nodeNoStop                     , Types.tracer = tracerDefault})
-  ]
-  ++
-  -- nodeForgeStress, "--shutdown-on-slot-synced 2400"
-  let forgeStress =   dummy
-                    & P.uniCircle
-                    . P.loopback
-                    . P.fixedLoaded . P.generatorTps 15
-                    . P.shutdownOnSlot 2400
-                    . P.analysisStandard
-  in [
-    (forgeStress & P.name "forge-stress-solo"          . P.hosts 1 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStress & P.name "forge-stress-pre-solo"      . P.hosts 1 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStress & P.name "forge-stress-plutus-solo"   . P.hosts 1 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStress & P.name "forge-stress"               . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStress & P.name "forge-stress-light"         . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStress & P.name "forge-stress-notracer"      . P.hosts 3 . P.tracerOff . P.newTracing . P.p2pOff                                       )
-  -- TODO: FIXME: "forge-stress-p2p" has no P2P enabled!
-  , (forgeStress & P.name "forge-stress-p2p"           . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStress & P.name "forge-stress-plutus"        . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStress & P.name "forge-stress-pre"           . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStress & P.name "forge-stress-pre-notracer"  . P.hosts 3 . P.tracerOff . P.newTracing . P.p2pOff                                       )
-  , (forgeStress & P.name "forge-stress-pre-plutus"    . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStress & P.name "forge-stress-pre-rtsA4m"    . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcAllocSize  4)
-  , (forgeStress & P.name "forge-stress-pre-rtsA4mN3"  . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3 . P.rtsGcAllocSize  4)
-  , (forgeStress & P.name "forge-stress-pre-rtsA64m"   . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcAllocSize 64)
-  , (forgeStress & P.name "forge-stress-pre-rtsA64mN3" . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3 . P.rtsGcAllocSize 64)
-  , (forgeStress & P.name "forge-stress-pre-rtsN3"     . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3                      )
-  , (forgeStress & P.name "forge-stress-pre-rtsxn"     . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcNonMoving   )
-  ]
-  ++
-  -- nodeForgeStress2x, "--shutdown-on-slot-synced 4800"
-  [
-    (dummy { Types.name = "forge-stress-large",                                   Types.composition = compHexagon         , Types.node = nodeForgeStress2x                             , Types.tracer = tracerDefault})
-  ]
-  ++
-  [
-    (dummy { Types.name = "dish-10M",                                             Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish-10M-plutus",                                      Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish",                                                 Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish-plutus",                                          Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
   ]
   ++
   [
@@ -698,14 +711,6 @@ nodeEpochTransition = nodeDefault (Just 900) Nothing
 -- Shutdown on slot 1200
 nodeTraceFull :: Types.Node
 nodeTraceFull = nodeDefault (Just 1200) Nothing
-
--- Shutdown on slot 2400
-nodeForgeStress :: Types.Node
-nodeForgeStress = nodeDefault (Just 2400) Nothing
-
--- Shutdown on slot 4800
-nodeForgeStress2x :: Types.Node
-nodeForgeStress2x = nodeDefault (Just 4800) Nothing
 
 -- Shutdown on slot 9000
 nodePlutusCall :: Types.Node

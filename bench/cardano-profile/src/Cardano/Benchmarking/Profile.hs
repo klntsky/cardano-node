@@ -9,7 +9,7 @@ module Cardano.Benchmarking.Profile (
   , name, desc
   , loopback, nomadPerf
   , uniCircle, torus, torusDense
-  , hosts, pools, chainsync, withExplorer
+  , hosts, pools, chainsync, withExplorerNode
   , withChaindbServer
   , idle, fixedLoaded
   , shutdownOnSlot, shutdownOnBlock, shutdownOnOff
@@ -105,8 +105,8 @@ chainsync size = comp (\c -> c {
   , Types.n_pool_hosts = 0
 })
 
-withExplorer :: Types.Profile -> Types.Profile
-withExplorer = comp (\c -> c {Types.with_explorer = True})
+withExplorerNode :: Types.Profile -> Types.Profile
+withExplorerNode = comp (\c -> c {Types.with_explorer = True})
 
 withChaindbServer :: Types.Profile -> Types.Profile
 withChaindbServer = comp (\c -> c {Types.with_chaindb_server = Just True})
