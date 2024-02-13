@@ -124,8 +124,9 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   let fast =   dummy
              & P.uniCircle . P.hosts 2
              . P.loopback
-             . P.fixedLoaded
+             . P.fixedLoaded . P.generatorTps 15
              . P.shutdownOnBlock 1
+             . P.analysisStandard
   in [
     (fast & P.name "fast"            . P.tracerOn  . P.newTracing          )
   , (fast & P.name "fast-plutus"     . P.tracerOn  . P.newTracing          )
@@ -143,8 +144,9 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ++
   let ciTest =   dummy
                & P.hosts 2
-               . P.fixedLoaded
+               . P.fixedLoaded . P.generatorTps 15
                . P.shutdownOnBlock 3
+               . P.analysisStandard
       ciTestLocal     = ciTest & P.uniCircle . P.loopback
       ciTestNomadPerf = ciTest & P.torus     . P.nomadPerf . P.withExplorer
   in [
@@ -162,8 +164,9 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   -- ci-bench: FixedLoaded and "--shutdown-on-block-synced 15"
   ------------------------------------------------------------
   let ciBench =  dummy
-               & P.fixedLoaded
+               & P.fixedLoaded . P.generatorTps 15
                . P.shutdownOnBlock 15
+               . P.analysisStandard
       ciBench2  = ciBench & P.hosts  2
       ciBench6  = ciBench & P.hosts  6
       ciBench10 = ciBench & P.hosts 10
@@ -231,29 +234,42 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
     (dummy { Types.name = "forge-stress-plutus-solo",                             Types.composition = compSolo            , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
   , (dummy { Types.name = "forge-stress-pre-solo",                                Types.composition = compSolo            , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
   , (dummy { Types.name = "forge-stress-solo",                                    Types.composition = compSolo            , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress",                                         Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-light",                                   Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-notracer",                                Types.composition = compTriplet         , Types.node = nodeNoTracer nodeForgeStress                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-p2p",                                     Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-plutus",                                  Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre",                                     Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-notracer",                            Types.composition = compTriplet         , Types.node = nodeNoTracer nodeForgeStress                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-plutus",                              Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsA4m",                              Types.composition = compTriplet         , Types.node = nodeRtsA4m nodeForgeStress                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsA4mN3",                            Types.composition = compTriplet         , Types.node = nodeRtsA4mN3 nodeForgeStress                  , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsA64m",                             Types.composition = compTriplet         , Types.node = nodeRtsA64m nodeForgeStress                   , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsA64mN3",                           Types.composition = compTriplet         , Types.node = nodeRtsA64mN3 nodeForgeStress                 , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsN3",                               Types.composition = compTriplet         , Types.node = nodeRtsN3 nodeForgeStress                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "forge-stress-pre-rtsxn",                               Types.composition = compTriplet         , Types.node = nodeRtsXn nodeForgeStress                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish-10M",                                             Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish-10M-plutus",                                      Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish",                                                 Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "dish-plutus",                                          Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  ]
+  ++
+  let forgeStress =   dummy
+                    & P.uniCircle . P.hosts 3
+                    . P.loopback
+                    . P.fixedLoaded . P.generatorTps 15
+                    . P.shutdownOnSlot 2400
+                    . P.analysisStandard
+  in [
+    (forgeStress & P.name "forge-stress"               . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStress & P.name "forge-stress-light"         . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStress & P.name "forge-stress-notracer"      . P.tracerOff . P.newTracing . P.p2pOff                                       )
+  -- TODO: FIXME: "forge-stress-p2p" has no P2P enabled!
+  , (forgeStress & P.name "forge-stress-p2p"           . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStress & P.name "forge-stress-plutus"        . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStress & P.name "forge-stress-pre"           . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStress & P.name "forge-stress-pre-notracer"  . P.tracerOff . P.newTracing . P.p2pOff                                       )
+  , (forgeStress & P.name "forge-stress-pre-plutus"    . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStress & P.name "forge-stress-pre-rtsA4m"    . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcAllocSize  4)
+  , (forgeStress & P.name "forge-stress-pre-rtsA4mN3"  . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3 . P.rtsGcAllocSize  4)
+  , (forgeStress & P.name "forge-stress-pre-rtsA64m"   . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcAllocSize 64)
+  , (forgeStress & P.name "forge-stress-pre-rtsA64mN3" . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3 . P.rtsGcAllocSize 64)
+  , (forgeStress & P.name "forge-stress-pre-rtsN3"     . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3                      )
+  , (forgeStress & P.name "forge-stress-pre-rtsxn"     . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcNonMoving   )
   ]
   ++
   -- nodeForgeStress2x, "--shutdown-on-slot-synced 4800"
   [
     (dummy { Types.name = "forge-stress-large",                                   Types.composition = compHexagon         , Types.node = nodeForgeStress2x                             , Types.tracer = tracerDefault})
+  ]
+  ++
+  [
+    (dummy { Types.name = "dish-10M",                                             Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "dish-10M-plutus",                                      Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "dish",                                                 Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "dish-plutus",                                          Types.composition = compTriplet         , Types.node = nodeForgeStress                               , Types.tracer = tracerDefault})
   ]
   ++
   [
@@ -812,143 +828,9 @@ chainsync-early-alonzo-p2p-coay
 
 TODO: Should "ci-bench-oldtracing-nomadperf" and "ci-test-oldtracing-nomadperf"
       include "-nop2p" in their names ???
-
-TODO: FIXME: "forge-stress-p2p" has no P2P enabled!
 --}
 nodeP2P :: Types.Node -> Types.Node
 nodeP2P node = node {Types.verbatim = Types.NodeVerbatim (Just True)}
-
-{-- RTS options to control the garbage collector
-
--A ⟨size⟩
-Set the allocation area size used by the garbage collector. The allocation area
-(actually generation 0 step 0) is fixed and is never resized (unless you use
--H [⟨size⟩], below).
-
-Optimal settings depend on the actual machine, program, and other RTS options.
-Increasing the allocation area size means worse cache behaviour but fewer
-garbage collections and less promotion.
-
-In general settings >= 4MB can reduce performance in some cases, in particular
-for single threaded operation. However in a parallel setting increasing the
-allocation area to 16MB, or even 64MB can increase gc throughput significantly.
-
-With only 1 generation (e.g. -G1, see -G ⟨generations⟩) the -A option specifies
-the minimum allocation area, since the actual size of the allocation area will
-be resized according to the amount of data in the heap (see -F ⟨factor⟩, below).
-
-When heap profiling using a smaller allocation area can increase accuracy as
-more frequent major garbage collections also results in more frequent heap
-snapshots
-
-https://downloads.haskell.org/ghc/latest/docs/users_guide/runtime_control.html#rts-flag--A%20%E2%9F%A8size%E2%9F%A9
---}
-
-{-- Used by:
-wb profile all-profiles | jq 'map(select( .node.rts_flags_override == ["-A4m"] ))' | jq 'map(.name)'
-[
-  "forge-stress-pre-rtsA4m",
-]
---}
-nodeRtsA4m :: Types.Node -> Types.Node
-nodeRtsA4m node = node {Types.rts_flags_override = ["-A4m"]}
-
-{-- Used by:
-wb profile all-profiles | jq 'map(select( .node.rts_flags_override == ["-A64m"] ))' | jq 'map(.name)'
-[
-  "forge-stress-pre-rtsA64m",
-]
---}
-nodeRtsA64m :: Types.Node -> Types.Node
-nodeRtsA64m node = node {Types.rts_flags_override = ["-A64m"]}
-
-{-- RTS options to control the garbage collector
-
---nonmoving-gc
-Enable the concurrent mark-and-sweep garbage collector for old generation
-collectors. Typically GHC uses a stop-the-world copying garbage collector for
-all generations. This can cause long pauses in execution during major garbage
-collections. --nonmoving-gc enables the use of a concurrent mark-and-sweep
-garbage collector for oldest generation collections. Under this collection
-strategy oldest-generation garbage collection can proceed concurrently with
-mutation.
-
-https://downloads.haskell.org/ghc/latest/docs/users_guide/runtime_control.html#rts-flag---nonmoving-gc
---}
-
-{-- Used by:
-wb profile all-profiles | jq 'map(select( .node.rts_flags_override == ["-xn"] ))' | jq 'map(.name)'
-[
-  "forge-stress-pre-rtsxn"
-]
---}
-nodeRtsXn :: Types.Node -> Types.Node
-nodeRtsXn node = node {Types.rts_flags_override = ["-xn"]}
-
-{-- RTS options for SMP parallelism
-Use ⟨x⟩ simultaneous threads when running the program.
-
-The runtime manages a set of virtual processors, which we call capabilities, the
-number of which is determined by the -N option. Each capability can run one
-Haskell thread at a time, so the number of capabilities is equal to the number
-of Haskell threads that can run physically in parallel. A capability is animated
-by one or more OS threads; the runtime manages a pool of OS threads for each
-capability, so that if a Haskell thread makes a foreign call (see
-Multi-threading and the FFI) another OS thread can take over that capability.
-
-Normally ⟨x⟩ should be chosen to match the number of CPU cores on the machine
-[1]. For example, on a dual-core machine we would probably use +RTS -N2 -RTS.
-
-Omitting ⟨x⟩, i.e. +RTS -N -RTS, lets the runtime choose the value of ⟨x⟩ itself
-based on how many processors are in your machine.
-
-Omitting -N⟨x⟩ entirely means -N1.
-
-With -maxN⟨x⟩, i.e. +RTS -maxN3 -RTS, the runtime will choose at most (x), also
-limited by the number of processors on the system. Omitting (x) is an error, if
-you need a default use option -N.
-
-Be careful when using all the processors in your machine: if some of your
-processors are in use by other programs, this can actually harm performance
-rather than improve it. Asking GHC to create more capabilities than you have
-physical threads is almost always a bad idea.
-
-Setting -N also has the effect of enabling the parallel garbage collector (see
-RTS options to control the garbage collector).
-
-The current value of the -N option is available to the Haskell program via
-Control.Concurrent.getNumCapabilities, and it may be changed while the program
-is running by calling Control.Concurrent.setNumCapabilities.
-
-https://downloads.haskell.org/ghc/latest/docs/users_guide/using-concurrent.html#rts-options-for-smp-parallelism
---}
-
-{-- Used by:
-wb profile all-profiles | jq 'map(select( .node.rts_flags_override == ["-N3"] ))' | jq 'map(.name)'
-[
-  "forge-stress-pre-rtsN3",
-]
---}
-nodeRtsN3 :: Types.Node -> Types.Node
-nodeRtsN3 node = node {Types.rts_flags_override = ["-N3"]}
-
-{-- Used by:
-wb profile all-profiles | jq 'map(select( .node.rts_flags_override == ["-A4m", "-N3"] ))' | jq 'map(.name)'
-[
-  "forge-stress-pre-rtsA4mN3",
-]
---}
-nodeRtsA4mN3 :: Types.Node -> Types.Node
-nodeRtsA4mN3 node = node {Types.rts_flags_override = ["-A4m", "-N3"]}
-
-{-- Used by:
-wb profile all-profiles | jq 'map(select( .node.rts_flags_override == ["-A64m", "-N3"] ))' | jq 'map(.name)'
-[
-  "forge-stress-pre-rtsA64mN3",
-]
---}
-nodeRtsA64mN3 :: Types.Node -> Types.Node
-nodeRtsA64mN3 node = node {Types.rts_flags_override = ["-A64m", "-N3"]}
 
 --------------------------------------------------------------------------------
 

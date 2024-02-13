@@ -18,12 +18,15 @@ module Cardano.Benchmarking.Profile (
   , newTracing, oldTracing
   , rtsGcNonMoving, rtsGcAllocSize, rtsThreads
   , tracerRtview, tracerWithresources
+  , generatorTps
+  , analysisOff, analysisStandard, analysisPerformance
 ) where
 
 import           Prelude hiding (id)
 --import           Data.Function  ((&))
 --import           Data.List      (tails, sortOn, uncons)
 --import           Data.Maybe     (isJust)
+import qualified Data.Scientific as Scientific
 
 import qualified Cardano.Benchmarking.Profile.Types as Types
 
@@ -121,9 +124,11 @@ fixedLoaded p = p {Types.scenario = Types.FixedLoaded}
 node :: (Types.Node -> Types.Node) -> Types.Profile -> Types.Profile
 node f p = p {Types.node = f (Types.node p)}
 
+-- TODO: Validate with shutdownOnBlock
 shutdownOnSlot :: Int -> Types.Profile -> Types.Profile
 shutdownOnSlot slot = node (\n -> n {Types.shutdown_on_slot_synced = Just slot})
 
+-- TODO: Validate with shutdownOnSlot
 shutdownOnBlock :: Int -> Types.Profile -> Types.Profile
 shutdownOnBlock block = node (\n -> n {Types.shutdown_on_block_synced = Just block})
 
@@ -173,3 +178,27 @@ tracerRtview = tracer (\t -> t {Types.rtview = True})
 
 tracerWithresources :: Types.Profile -> Types.Profile
 tracerWithresources = tracer (\t -> t {Types.withresources = True})
+
+--------------------------------------------------------------------------------
+
+generator :: (Types.Generator -> Types.Generator) -> Types.Profile -> Types.Profile
+generator f p = p {Types.generator = f (Types.generator p)}
+
+generatorTps :: Scientific.Scientific -> Types.Profile -> Types.Profile
+generatorTps tps = generator (\g -> g {Types.tps = tps})
+
+--------------------------------------------------------------------------------
+
+analysis :: (Types.Analysis -> Types.Analysis) -> Types.Profile -> Types.Profile
+analysis f p = p {Types.analysis = f (Types.analysis p)}
+
+analysisOff :: Types.Profile -> Types.Profile
+analysisOff = analysis (\a -> a {Types.analysisType = Nothing})
+
+analysisStandard :: Types.Profile -> Types.Profile
+analysisStandard = analysis (\a -> a {Types.analysisType = Just "standard"})
+
+analysisPerformance :: Types.Profile -> Types.Profile
+analysisPerformance = analysis (\a -> a {Types.analysisType = Just "performance"})
+
+--------------------------------------------------------------------------------
