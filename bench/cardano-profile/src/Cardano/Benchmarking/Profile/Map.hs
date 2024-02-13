@@ -264,24 +264,30 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ]
   ++
   -- No "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
-  [
-    (dummy { Types.name = "k3-3ep-18kTx-10000kU-1300kD-64kbs-10tps-fixed-loaded", Types.composition = compTriplet         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "k3-3ep-22kTx-10000kU-1300kD-64kbs-fixed-loaded",       Types.composition = compTriplet         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "k3-3ep-5kTx-10000kU-1300kD-64kbs-fixed-loaded",        Types.composition = compTriplet         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "k3-3ep-9kTx-10000kU-1300kD-64kbs-5tps-fixed-loaded",   Types.composition = compTriplet         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "default",                                              Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "default-p2p",                                          Types.composition = compHexagon         , Types.node = nodeP2P nodeNoStop                            , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "devops",                                               Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "idle",                                                 Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "oldtracing",                                           Types.composition = compHexagon         , Types.node = nodeOldTracing nodeNoStop                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutus",                                               Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutus-secp-ecdsa",                                    Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutus-secp-schnorr",                                  Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "tracer-only",                                          Types.composition = compHexagon         , Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "default-nomadperf",                                    Types.composition = compHexagonNomadPerf, Types.node = nodeP2P nodeNoStop                            , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "default-nomadperf-nop2p",                              Types.composition = compHexagonNomadPerf, Types.node = nodeNoStop                                    , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "oldtracing-nomadperf",                                 Types.composition = compHexagonNomadPerf, Types.node = nodeOldTracing $ nodeP2P nodeNoStop           , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "oldtracing-nomadperf-nop2p",                           Types.composition = compHexagonNomadPerf, Types.node = nodeOldTracing nodeNoStop                     , Types.tracer = tracerDefault})
+  let noCliStop =   dummy
+                  & P.shutdownOnOff
+      noCliStopLocal     = noCliStop & P.uniCircle . P.loopback
+      noCliStopNomadPerf = noCliStop & P.torus     . P.nomadPerf . P.withExplorerNode
+  in [
+  -- 3 nodes versions
+    (noCliStopLocal     & P.name "k3-3ep-18kTx-10000kU-1300kD-64kbs-10tps-fixed-loaded" . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopLocal     & P.name "k3-3ep-22kTx-10000kU-1300kD-64kbs-fixed-loaded"       . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopLocal     & P.name "k3-3ep-5kTx-10000kU-1300kD-64kbs-fixed-loaded"        . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopLocal     & P.name "k3-3ep-9kTx-10000kU-1300kD-64kbs-5tps-fixed-loaded"   . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  -- 6 nodes versions.
+  , (noCliStopLocal     & P.name "default"                                              . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopLocal     & P.name "default-p2p"                                          . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOn   )
+  , (noCliStopLocal     & P.name "devops"                                               . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopLocal     & P.name "idle"                                                 . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopLocal     & P.name "oldtracing"                                           . P.hosts 6 . P.tracerOn  . P.oldTracing . P.p2pOff  )
+  , (noCliStopLocal     & P.name "plutus"                                               . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopLocal     & P.name "plutus-secp-ecdsa"                                    . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopLocal     & P.name "plutus-secp-schnorr"                                  . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopLocal     & P.name "tracer-only"                                          . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopNomadPerf & P.name "default-nomadperf"                                    . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOn   )
+  , (noCliStopNomadPerf & P.name "default-nomadperf-nop2p"                              . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOff  )
+  , (noCliStopNomadPerf & P.name "oldtracing-nomadperf"                                 . P.hosts 6 . P.tracerOn  . P.oldTracing . P.p2pOn   )
+  , (noCliStopNomadPerf & P.name "oldtracing-nomadperf-nop2p"                           . P.hosts 6 . P.tracerOn  . P.oldTracing . P.p2pOff  )
   ]
   ++
   [
@@ -470,53 +476,6 @@ compDoubletLoopback = Types.Composition {
 }
 
 {-- Used by:
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 3))' | jq 'map(.name) | sort'
-[
-  "dish-10M",
-  "dish-10M-plutus",
-  "dish",
-  "dish-plutus",
-  "forge-stress",,
-  "forge-stress-light",
-  "forge-stress-notracer",
-  "forge-stress-p2p",
-  "forge-stress-plutus",
-  "forge-stress-pre",
-  "forge-stress-pre-notracer",
-  "forge-stress-pre-plutus",
-  "forge-stress-pre-rtsA4m",
-  "forge-stress-pre-rtsA4mN3",
-  "forge-stress-pre-rtsA64m",
-  "forge-stress-pre-rtsA64mN3",
-  "forge-stress-pre-rtsN3",
-  "forge-stress-pre-rtsxn",
-  "k3-3ep-18kTx-10000kU-1300kD-64kbs-10tps-fixed-loaded",
-  "k3-3ep-22kTx-10000kU-1300kD-64kbs-fixed-loaded",
-  "k3-3ep-5kTx-10000kU-1300kD-64kbs-fixed-loaded",
-  "k3-3ep-9kTx-10000kU-1300kD-64kbs-5tps-fixed-loaded",
-]
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 3))' | jq .[] | jq -c .composition | sort | uniq
-{"locations":["loopback"],"n_bft_hosts":0,"n_singular_hosts":3,"n_dense_hosts":0,"dense_pool_density":1,"with_proxy":false,"with_explorer":false,"topology":"uni-circle","n_hosts":3,"n_pools":3,"n_singular_pools":3,"n_dense_pools":0,"n_pool_hosts":3}
---}
-compTriplet :: Types.Composition
-compTriplet = Types.Composition {
-    Types.locations = [Types.Loopback]
-  , Types.n_bft_hosts = 0
-  , Types.n_singular_hosts = 3
-  , Types.n_dense_hosts = 0
-  , Types.dense_pool_density = 1
-  , Types.with_proxy = False
-  , Types.with_explorer = False
-  , Types.topology = Types.UniCircle
-  , Types.with_chaindb_server = Nothing
-  , Types.n_hosts = 3
-  , Types.n_pools = 3
-  , Types.n_singular_pools = 3
-  , Types.n_dense_pools = 0
-  , Types.n_pool_hosts = 3
-}
-
-{-- Used by:
 wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 4))' | jq 'map(.name) | sort'
 [
   "model-secp-ecdsa-double",
@@ -622,39 +581,6 @@ compHexagonTorus = Types.Composition {
 }
 
 {-- Used by:
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 6))' | jq 'map(select(.composition.locations != ["loopback"]))' | jq 'map(.name) | sort'
-[
-  "default-nomadperf",
-  "default-nomadperf-nop2p",
-  "oldtracing-nomadperf",
-  "oldtracing-nomadperf-nop2p",
-]
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 6))' | jq 'map(select(.composition.locations != ["loopback"]))' | jq .[] | jq -c .composition | sort | uniq
-{"locations":["eu-central-1","us-east-1","ap-southeast-2"],"n_bft_hosts":0,"n_singular_hosts":6,"n_dense_hosts":0,"dense_pool_density":1,"with_proxy":false,"with_explorer":true,"topology":"torus","n_hosts":6,"n_pools":6,"n_singular_pools":6,"n_dense_pools":0,"n_pool_hosts":6
---}
-compHexagonNomadPerf :: Types.Composition
-compHexagonNomadPerf = Types.Composition {
-    Types.locations = [
-      Types.AWS Types.EU_CENTRAL_1
-    , Types.AWS Types.US_EAST_1
-    , Types.AWS Types.AP_SOUTHEAST_2
-    ]
-  , Types.n_bft_hosts = 0
-  , Types.n_singular_hosts = 6
-  , Types.n_dense_hosts = 0
-  , Types.dense_pool_density = 1
-  , Types.with_proxy = False
-  , Types.with_explorer = True
-  , Types.topology = Types.Torus
-  , Types.with_chaindb_server = Nothing
-  , Types.n_hosts = 6
-  , Types.n_pools = 6
-  , Types.n_singular_pools = 6
-  , Types.n_dense_pools = 0
-  , Types.n_pool_hosts = 6
-}
-
-{-- Used by:
 wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 52))' | jq 'map(.name) | sort'
 [
   "plutus-nomadperf",
@@ -700,9 +626,6 @@ nodeDefault maybeSlotShutdown maybeBlockShutdown = Types.Node {
 , Types.nodeTracer = True
 , Types.verbatim = Types.NodeVerbatim Nothing
 }
-
-nodeNoStop :: Types.Node
-nodeNoStop = nodeDefault Nothing Nothing
 
 -- Shutdown on slot 900
 nodeEpochTransition :: Types.Node
