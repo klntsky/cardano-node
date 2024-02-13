@@ -5,16 +5,18 @@
 --------------------------------------------------------------------------------
 
 module Cardano.Benchmarking.Profile.Map (
-  profiles
-, byName
+  byName, profiles
+, profilesNoEra
 ) where
 
 --------------------------------------------------------------------------------
 
 import           Prelude
+import           Data.Function ((&))
 import qualified Data.Map.Strict as Map
 import qualified Data.Scientific as Scientific
 
+import qualified Cardano.Benchmarking.Profile as P
 import qualified Cardano.Benchmarking.Profile.Types as Types
 
 --------------------------------------------------------------------------------
@@ -27,16 +29,8 @@ byName name = (Map.!) profiles name
 profiles :: Map.Map String Types.Profile
 profiles = foldMap
   (\profile -> Map.fromList $
-{--
-> wb profile all-profiles | jq .[] | jq -r .name | sort | uniq | grep ci-test-notracer
-ci-test-notracer-alra
-ci-test-notracer-alzo
-ci-test-notracer-bage
-ci-test-notracer-coay
-ci-test-notracer-mary
-ci-test-notracer-shey
---}
     let
+        -- Add eras, like "ci-test-notracer-[alra|alzo|bage|coay|mary|shey]"
         addEra = \p era suffix ->
           let name = Types.name p
               newName = name ++ "-" ++ suffix
@@ -52,85 +46,150 @@ ci-test-notracer-shey
   )
   profilesNoEra
 
-{--
-  (Types.Profile {
-      Types.name = "ci-test-bage"
-    , Types.desc = Just "Miniature dataset, CI-friendly duration, test scale"
-    , Types.composition = compositionCiTest
-    , Types.era = Types.Babbage
---    , Types.genesis = Nothing
-    , Types.scenario = Types.FixedLoaded
-    , Types.node = nodeCiTest
-    , Types.tracer = tracerCiTest
-    , Types.generator = generatorCiTest
-    , Types.analysis = analysisCiTest
---    , Types.overlay = mempty
-  })
---}
+-- The defaults
+--------------------------------------------------------------------------------
 
 dummy :: Types.Profile
 dummy = Types.Profile {
-    Types.name = "ci-test-bage"
-  , Types.desc = Just "Miniature dataset, CI-friendly duration, test scale"
-  , Types.composition = compCiTest
-  , Types.era = Types.Babbage
+    Types.name = ""
+  , Types.desc = Nothing
+  , Types.composition = Types.Composition {
+      Types.locations = []
+    , Types.n_bft_hosts = 0
+    , Types.n_singular_hosts = 0
+    , Types.n_dense_hosts = 0
+    , Types.dense_pool_density = 0
+    , Types.with_proxy = False
+    , Types.with_explorer = False
+    , Types.topology = Types.Line
+    , Types.with_chaindb_server = Nothing
+    , Types.n_hosts = 0
+    , Types.n_pools = 0
+    , Types.n_singular_pools = 0
+    , Types.n_dense_pools = 0
+    , Types.n_pool_hosts = 0
+  }
+  , Types.era = Types.Allegra
 --  , Types.genesis = Nothing
-  , Types.scenario = Types.FixedLoaded
-  , Types.node = nodeCiTest
-  , Types.tracer = tracerCiTest
-  , Types.generator = generatorCiTest
-  , Types.analysis = analysisCiTest
+  , Types.scenario = Types.Idle
+  , Types.node = Types.Node {
+      Types.rts_flags_override = []
+    , Types.shutdown_on_slot_synced = Nothing
+    , Types.shutdown_on_block_synced = Nothing
+    , Types.tracing_backend = ""
+    , Types.nodeTracer = False
+    , Types.verbatim = Types.NodeVerbatim Nothing
+  }
+  , Types.tracer = Types.Tracer {
+      Types.rtview = False
+    , Types.ekg = False
+    , Types.withresources = False
+  }
+  , Types.generator = Types.Generator {
+      Types.add_tx_size = 0
+    , Types.init_cooldown = 0
+    , Types.inputs_per_tx = 0
+    , Types.outputs_per_tx = 0
+    , Types.tx_fee = 0
+    , Types.epochs = 0
+    , Types.tps = 0
+    , Types.plutus = Nothing
+    , Types.tx_count = 0
+  }
+  , Types.analysis = Types.Analysis {
+      Types.analysisType = Nothing
+    , Types.cluster_base_startup_overhead_s = 0
+    , Types.start_log_spread_s = 0
+    , Types.last_log_spread_s = 0
+    , Types.silence_since_last_block_s = 0
+    , Types.tx_loss_ratio = Scientific.fromFloatDigits (0 :: Double)
+    , Types.finish_patience = 0
+    , Types.filters = []
+    , Types.filter_exprs = []
+    , Types.minimum_chain_density = Scientific.fromFloatDigits (0 :: Double)
+    , Types.cluster_startup_overhead_s = 0
+  }
 --  , Types.overlay = mempty
 }
 
 -- TODO: forge-stress and forge-stress-light have the same .node.shutdown_on_slot_synced
-
+-- Adding a P.nameSuffix was abandoned to keep the code `grep` friendly!
 profilesNoEra :: Map.Map String Types.Profile
 -- Names:
 -- wb profile all-profiles | jq .[] | jq -r .name | sort | uniq | grep "\-bage"
 profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
-  -- fast, "--shutdown-on-block-synced 1"
-  [
-    (dummy { Types.name = "fast",                                                 Types.composition = compDoubletLoopback , Types.node = nodeFast                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "fast-notracer",                                        Types.composition = compDoubletLoopback , Types.node = nodeNoTracer nodeFast                         , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "fast-oldtracing",                                      Types.composition = compDoubletLoopback , Types.node = nodeOldTracing nodeFast                       , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "fast-p2p",                                             Types.composition = compDoubletLoopback , Types.node = nodeP2P nodeFast                              , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "fast-plutus",                                          Types.composition = compDoubletLoopback , Types.node = nodeFast                                      , Types.tracer = tracerDefault})
+  ------------------------------------------------------
+  -- fast: FixedLoaded and"--shutdown-on-block-synced 1"
+  ------------------------------------------------------
+  let fast =   dummy
+             & P.uniCircle . P.hosts 2
+             . P.loopback
+             . P.fixedLoaded
+             . P.shutdownOnBlock 1
+  in [
+    (fast & P.name "fast"            . P.tracerOn  . P.newTracing          )
+  , (fast & P.name "fast-plutus"     . P.tracerOn  . P.newTracing          )
+  , (fast & P.name "fast-p2p"        . P.tracerOn  . P.newTracing . P.p2pOn)
+  , (fast & P.name "fast-oldtracing" . P.tracerOn  . P.oldTracing          )
+  , (fast & P.name "fast-notracer"   . P.tracerOff . P.newTracing          )
   ]
   ++
-  -- ci-test, "--shutdown-on-block-synced 3"
+  ----------------------------------------------------------
+  -- ci-test: FixedLoaded and "--shutdown-on-block-synced 3"
+  ----------------------------------------------------------
   [
     (dummy { Types.name = "ci-test-dense10",                                      Types.composition = compSoloDense10     , Types.node = nodeTest                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test",                                              Types.composition = compDoubletLoopback , Types.node = nodeTest                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-notracer",                                     Types.composition = compDoubletLoopback , Types.node = nodeNoTracer nodeTest                         , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-p2p",                                          Types.composition = compDoubletLoopback , Types.node = nodeP2P nodeTest                              , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-plutus",                                       Types.composition = compDoubletLoopback , Types.node = nodeTest                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-rtview",                                       Types.composition = compDoubletLoopback , Types.node = nodeTest                                      , Types.tracer = tracerRtview})
-  , (dummy { Types.name = "ci-test-nomadperf",                                    Types.composition = compDoubletNomadPerf, Types.node = nodeP2P nodeTest                              , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-nomadperf-nop2p",                              Types.composition = compDoubletNomadPerf, Types.node = nodeTest                                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-test-oldtracing-nomadperf",                         Types.composition = compDoubletNomadPerf, Types.node = nodeOldTracing nodeTest                       , Types.tracer = tracerDefault})
   ]
   ++
-  -- ci-bench, "--shutdown-on-block-synced 15"
-  [
-    (dummy { Types.name = "ci-bench",                                             Types.composition = compDoubletLoopback , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-notracer",                                    Types.composition = compDoubletLoopback , Types.node = nodeNoTracer nodeBench                        , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-p2p",                                         Types.composition = compDoubletLoopback , Types.node = nodeP2P nodeBench                             , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-plutus",                                      Types.composition = compDoubletLoopback , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-plutus-secp-ecdsa",                           Types.composition = compDoubletLoopback , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-plutus-secp-schnorr",                         Types.composition = compDoubletLoopback , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-rtview",                                      Types.composition = compDoubletLoopback , Types.node = nodeBench                                     , Types.tracer = tracerRtview})
-  , (dummy { Types.name = "ci-bench-nomadperf",                                   Types.composition = compDoubletNomadPerf, Types.node = nodeP2P nodeBench                             , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-nomadperf-nop2p",                             Types.composition = compDoubletNomadPerf, Types.node = nodeBench                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "ci-bench-oldtracing-nomadperf",                        Types.composition = compDoubletNomadPerf, Types.node = nodeOldTracing nodeBench                      , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "trace-bench",                                          Types.composition = compHexagonTorus    , Types.node = nodeBench                                     , Types.tracer = tracerWithresources})
-  , (dummy { Types.name = "trace-bench-notracer",                                 Types.composition = compHexagonTorus    , Types.node = nodeNoTracer nodeBench                        , Types.tracer = tracerWithresources})
-  , (dummy { Types.name = "trace-bench-oldtracing",                               Types.composition = compHexagonTorus    , Types.node = nodeOldTracing nodeBench                      , Types.tracer = tracerWithresources})
-  , (dummy { Types.name = "trace-bench-rtview",                                   Types.composition = compHexagonTorus    , Types.node = nodeBench                                     , Types.tracer = tracerRtviewWithresources})
-  , (dummy { Types.name = "10",                                                   Types.composition = compTenner          , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "10-notracer",                                          Types.composition = compTenner          , Types.node = nodeNoTracer nodeBench                        , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "10-p2p",                                               Types.composition = compTenner          , Types.node = nodeP2P nodeBench                             , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "10-plutus",                                            Types.composition = compTenner          , Types.node = nodeBench                                     , Types.tracer = tracerDefault})
+  let ciTest =   dummy
+               & P.hosts 2
+               . P.fixedLoaded
+               . P.shutdownOnBlock 3
+      ciTestLocal     = ciTest & P.uniCircle . P.loopback
+      ciTestNomadPerf = ciTest & P.torus     . P.nomadPerf . P.withExplorer
+  in [
+    (ciTestLocal     & P.name "ci-test"                      . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciTestLocal     & P.name "ci-test-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
+  , (ciTestLocal     & P.name "ci-test-plutus"               . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciTestLocal     & P.name "ci-test-rtview"               . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
+  , (ciTestLocal     & P.name "ci-test-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                 )
+  , (ciTestNomadPerf & P.name "ci-test-nomadperf"            . P.tracerOn  . P.newTracing . P.p2pOn                  )
+  , (ciTestNomadPerf & P.name "ci-test-nomadperf-nop2p"      . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciTestNomadPerf & P.name "ci-test-oldtracing-nomadperf" . P.tracerOn  . P.oldTracing . P.p2pOff                 )
+  ]
+  ++
+  ------------------------------------------------------------
+  -- ci-bench: FixedLoaded and "--shutdown-on-block-synced 15"
+  ------------------------------------------------------------
+  let ciBench =  dummy
+               & P.fixedLoaded
+               . P.shutdownOnBlock 15
+      ciBench2  = ciBench & P.hosts  2
+      ciBench6  = ciBench & P.hosts  6
+      ciBench10 = ciBench & P.hosts 10
+      ciBench2Local     = ciBench2  & P.uniCircle . P.loopback
+      ciBench2NomadPerf = ciBench2  & P.torus     . P.nomadPerf . P.withExplorer
+      ciBench6Trace     = ciBench6  & P.torus     . P.loopback  . P.tracerWithresources
+      ciBench10Local    = ciBench10 & P.uniCircle . P.loopback
+  in [
+    (ciBench2Local     & P.name "ci-bench"                      . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench2Local     & P.name "ci-bench-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                 )
+  , (ciBench2Local     & P.name "ci-bench-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
+  , (ciBench2Local     & P.name "ci-bench-plutus"               . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench2Local     & P.name "ci-bench-plutus-secp-ecdsa"    . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench2Local     & P.name "ci-bench-plutus-secp-schnorr"  . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench2Local     & P.name "ci-bench-rtview"               . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
+  , (ciBench2NomadPerf & P.name "ci-bench-nomadperf"            . P.tracerOn  . P.newTracing . P.p2pOn                  )
+  , (ciBench2NomadPerf & P.name "ci-bench-nomadperf-nop2p"      . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench2NomadPerf & P.name "ci-bench-oldtracing-nomadperf" . P.tracerOn  . P.oldTracing . P.p2pOff                 )
+  , (ciBench6Trace     & P.name "trace-bench"                   . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench6Trace     & P.name "trace-bench-oldtracing"        . P.tracerOn  . P.oldTracing . P.p2pOff                 )
+  , (ciBench6Trace     & P.name "trace-bench-rtview"            . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
+  , (ciBench6Trace     & P.name "trace-bench-notracer"          . P.tracerOff . P.newTracing . P.p2pOff                 )
+  , (ciBench10Local    & P.name "10"                            . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench10Local    & P.name "10-plutus"                     . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench10Local    & P.name "10-p2p"                        . P.tracerOn  . P.newTracing . P.p2pOn                  )
+  , (ciBench10Local    & P.name "10-notracer"                   . P.tracerOff . P.newTracing . P.p2pOff                 )
   ]
   ++
   [
@@ -222,11 +281,6 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ]
   ++
   [
-    (dummy { Types.name = "plutus-nomadperf",                                     Types.composition = compComposeFiftyTwo , Types.node = nodeP2P nodePlutus                            , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutus-nomadperf-nop2p",                               Types.composition = compComposeFiftyTwo , Types.node = nodePlutus                                    , Types.tracer = tracerDefault})
-  ]
-  ++
-  [
     (dummy { Types.name = "trace-full",                                           Types.composition = compHexagonTorus    , Types.node = nodeTraceFull                                 , Types.tracer = tracerWithresources})
   , (dummy { Types.name = "trace-full-rtview",                                    Types.composition = compHexagonTorus    , Types.node = nodeTraceFull                                 , Types.tracer = tracerRtviewWithresources})
   ]
@@ -236,6 +290,11 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   , (dummy { Types.name = "value-nomadperf-nop2p",                                Types.composition = compComposeFiftyTwo , Types.node = nodeValue                                     , Types.tracer = tracerDefault})
   , (dummy { Types.name = "value-oldtracing-nomadperf",                           Types.composition = compComposeFiftyTwo , Types.node = nodeOldTracing $ nodeP2P nodeValue            , Types.tracer = tracerDefault})
   , (dummy { Types.name = "value-oldtracing-nomadperf-nop2p",                     Types.composition = compComposeFiftyTwo , Types.node = nodeOldTracing nodeValue                      , Types.tracer = tracerDefault})
+  ]
+  ++
+  [
+    (dummy { Types.name = "plutus-nomadperf",                                     Types.composition = compComposeFiftyTwo , Types.node = nodeP2P nodePlutus                            , Types.tracer = tracerDefault})
+  , (dummy { Types.name = "plutus-nomadperf-nop2p",                               Types.composition = compComposeFiftyTwo , Types.node = nodePlutus                                    , Types.tracer = tracerDefault})
   ]
 
 --------------------------------------------------------------------------------
@@ -268,33 +327,10 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
     } as $triplet
   |
     { composition:
-      { n_singular_hosts:               4
-      , n_dense_hosts:                  0
-      }
-    } as $quadruplet
-  |
-    { composition:
-      { n_singular_hosts:               6
-      , n_dense_hosts:                  0
-      }
-    } as $hexagon
-  |
-    { composition:
-      { n_singular_hosts:               10
-      , n_dense_hosts:                  0
-      }
-    } as $tenner
-  |
-    { composition:
       { n_singular_hosts:               52
       , n_dense_hosts:                  0
       }
     } as $compose_fiftytwo
-  |
-    { composition:
-      { topology:                       "torus"
-      }
-    } as $torus
   |
     { composition:
       { n_singular_hosts:               0
@@ -303,32 +339,6 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
       , with_explorer:                  true
       }
     } as $chainsync_cluster
-  |
-    # "qa" class Nodes of Cardano World Nomad cluster
-    { composition:
-      { locations:                      ["eu-central-1", "us-east-2"]
-      , topology:                       "torus"
-      , with_explorer:                  true
-      }
-    } as $nomad_cardano_world_qa
-  |
-    # P&T exclusive Nomad cluster Nodes
-    { composition:
-      { locations:                      ["eu-central-1", "us-east-1", "ap-southeast-2"]
-      , topology:                       "torus"
-      , with_explorer:                  true
-      }
-    } as $nomad_perf_torus
-  |
-    # nomad_perf using cardano-ops "dense" topology
-    # Can only be used with the 52 + explorer value profile!
-    { composition:
-      { locations:                      ["eu-central-1", "us-east-1", "ap-southeast-2"]
-      , topology:                       "torus-dense"
-      , with_explorer:                  true
-      }
-    } as $nomad_perf_dense
-
 --}
 
 {-- Used by:
@@ -451,41 +461,6 @@ compDoubletLoopback = Types.Composition {
   , Types.with_proxy = False
   , Types.with_explorer = False
   , Types.topology = Types.UniCircle
-  , Types.with_chaindb_server = Nothing
-  , Types.n_hosts = 2
-  , Types.n_pools = 2
-  , Types.n_singular_pools = 2
-  , Types.n_dense_pools = 0
-  , Types.n_pool_hosts = 2
-}
-
-{-- Used by:
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 2))' | jq 'map(select(.composition.locations != ["loopback"]))' | jq 'map(.name) | sort'
-[
-  "ci-bench-nomadperf",
-  "ci-bench-nomadperf-nop2p",
-  "ci-bench-oldtracing-nomadperf",
-  "ci-test-nomadperf",
-  "ci-test-nomadperf-nop2p",
-  "ci-test-oldtracing-nomadperf",
-]
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 2))' | jq 'map(select(.composition.locations != ["loopback"]))' | jq .[] | jq -c .composition | sort | uniq
-{"locations":["eu-central-1","us-east-1","ap-southeast-2"],"n_bft_hosts":0,"n_singular_hosts":2,"n_dense_hosts":0,"dense_pool_density":1,"with_proxy":false,"with_explorer":true,"topology":"torus","n_hosts":2,"n_pools":2,"n_singular_pools":2,"n_dense_pools":0,"n_pool_hosts":2}
---}
-compDoubletNomadPerf :: Types.Composition
-compDoubletNomadPerf = Types.Composition {
-    Types.locations = [
-      Types.AWS Types.EU_CENTRAL_1
-    , Types.AWS Types.US_EAST_1
-    , Types.AWS Types.AP_SOUTHEAST_2
-    ]
-  , Types.n_bft_hosts = 0
-  , Types.n_singular_hosts = 2
-  , Types.n_dense_hosts = 0
-  , Types.dense_pool_density = 1
-  , Types.with_proxy = False
-  , Types.with_explorer = True
-  , Types.topology = Types.Torus
   , Types.with_chaindb_server = Nothing
   , Types.n_hosts = 2
   , Types.n_pools = 2
@@ -680,35 +655,6 @@ compHexagonNomadPerf = Types.Composition {
 }
 
 {-- Used by:
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 10))' | jq 'map(.name) | sort'
-[
-  "10",
-  "10-notracer",
-  "10-p2p",
-  "10-plutus",
-]
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 10))' | jq .[] | jq -c .composition | sort | uniq
-{"locations":["loopback"],"n_bft_hosts":0,"n_singular_hosts":10,"n_dense_hosts":0,"dense_pool_density":1,"with_proxy":false,"with_explorer":false,"topology":"uni-circle","n_hosts":10,"n_pools":10,"n_singular_pools":10,"n_dense_pools":0,"n_pool_hosts":10}
---}
-compTenner :: Types.Composition
-compTenner = Types.Composition {
-    Types.locations = [Types.Loopback]
-  , Types.n_bft_hosts = 0
-  , Types.n_singular_hosts = 10
-  , Types.n_dense_hosts = 0
-  , Types.dense_pool_density = 1
-  , Types.with_proxy = False
-  , Types.with_explorer = False
-  , Types.topology = Types.UniCircle
-  , Types.with_chaindb_server = Nothing
-  , Types.n_hosts = 10
-  , Types.n_pools = 10
-  , Types.n_singular_pools = 10
-  , Types.n_dense_pools = 0
-  , Types.n_pool_hosts = 10
-}
-
-{-- Used by:
 wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 52))' | jq 'map(.name) | sort'
 [
   "plutus-nomadperf",
@@ -741,24 +687,6 @@ compComposeFiftyTwo = Types.Composition {
   , Types.n_singular_pools = 52
   , Types.n_dense_pools = 0
   , Types.n_pool_hosts = 52
-}
-
-compCiTest :: Types.Composition
-compCiTest = Types.Composition {
-    Types.locations = [Types.Loopback]
-  , Types.n_bft_hosts = 0
-  , Types.n_singular_hosts = 2
-  , Types.n_dense_hosts = 0
-  , Types.dense_pool_density = 1
-  , Types.with_proxy = False
-  , Types.with_explorer = False
-  , Types.topology = Types.UniCircle
-  , Types.with_chaindb_server = Nothing
-  , Types.n_hosts = 2
-  , Types.n_pools = 2
-  , Types.n_singular_pools = 2
-  , Types.n_dense_pools = 0
-  , Types.n_pool_hosts = 2
 }
 
 --------------------------------------------------------------------------------
@@ -816,17 +744,9 @@ nodeChainSyncByr = nodeDefault (Just 237599) Nothing
 nodeChainSyncAlo :: Types.Node
 nodeChainSyncAlo = nodeDefault (Just 38901589) Nothing
 
--- Shutdown on block 1
-nodeFast :: Types.Node
-nodeFast = nodeDefault Nothing (Just 1)
-
 -- Shutdown on block 3
 nodeTest :: Types.Node
 nodeTest = nodeDefault Nothing (Just 3)
-
--- Shutdown on block 15
-nodeBench :: Types.Node
-nodeBench = nodeDefault Nothing (Just 15)
 
 {-- Use by:
 wb profile all-profiles | jq 'map(select( .node.tracer == false ))' | jq .[] | jq -r '.name' | grep "\-coay" | sort
@@ -1060,20 +980,6 @@ tracerWithresources = Types.Tracer {
 }
 
 {-- Used by:
-wb profile all-profiles | jq 'map(select( .tracer.rtview == true and .tracer.withresources == false ))' | jq 'map(.name)'
-[
-  "ci-test-rtview",
-  "ci-bench-rtview",
-]
---}
-tracerRtview :: Types.Tracer
-tracerRtview = Types.Tracer {
-  Types.rtview = True
-, Types.ekg = False
-, Types.withresources= False
-}
-
-{-- Used by:
 wb profile all-profiles | jq 'map(select( .tracer.rtview == true and .tracer.withresources == true ))' | jq 'map(.name)'
 [
   "trace-bench-rtview",
@@ -1119,58 +1025,3 @@ generatorDefault = Types.Generator {
 }
 
 --}
-
---------------------------------------------------------------------------------
-
-nodeCiTest :: Types.Node
-nodeCiTest = Types.Node {
-    Types.rts_flags_override = []
-  , Types.shutdown_on_slot_synced = Nothing
-  , Types.shutdown_on_block_synced = Just 3
-  , Types.tracing_backend = "trace-dispatcher"
-  , Types.nodeTracer = True
-  , Types.verbatim = Types.NodeVerbatim Nothing
-}
-
-tracerCiTest :: Types.Tracer
-tracerCiTest = Types.Tracer {
-    Types.rtview = False
-  , Types.ekg = False
-  , Types.withresources = False
-}
-
-generatorCiTest :: Types.Generator
-generatorCiTest = Types.Generator {
-    Types.add_tx_size = 100
-  , Types.init_cooldown = 5
-  , Types.inputs_per_tx = 2
-  , Types.outputs_per_tx = 2
-  , Types.tx_fee = 1000000
-  , Types.epochs = 3
-  , Types.tps = 15
-  , Types.plutus = Nothing
-  , Types.tx_count = 9000
-}
-
-analysisCiTest :: Types.Analysis
-analysisCiTest = Types.Analysis {
-    Types.analysisType = Just "standard"
-  , Types.cluster_base_startup_overhead_s = 40
-  , Types.start_log_spread_s = 120
-  , Types.last_log_spread_s = 120
-  , Types.silence_since_last_block_s = 120
-  , Types.tx_loss_ratio = Scientific.fromFloatDigits (0.02 :: Double)
-  , Types.finish_patience = 21
-  , Types.filters = []
-  , Types.filter_exprs = [
-    (Types.AnalysisFilterExpression {
-      Types.tag = "CBlock"
-    , Types.contents = Types.AnalysisFilterExpressionContent {
-        Types.innerTag = "BMinimumAdoptions"
-      , Types.innerContents = 1
-      }
-    })
-  ]
-  , Types.minimum_chain_density = Scientific.fromFloatDigits (0.025 :: Double)
-  , Types.cluster_startup_overhead_s = 40
-}

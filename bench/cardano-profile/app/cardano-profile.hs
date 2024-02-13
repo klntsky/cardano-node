@@ -11,7 +11,7 @@
 import           Prelude
 --import           Text.Read (readEither)
 import qualified Data.Aeson as Aeson
---import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString.Lazy.Char8 as BSL8
 import qualified Options.Applicative as OA
 
 import qualified Cardano.Benchmarking.Profile as Profile
@@ -30,7 +30,7 @@ main = do
       )
     )
   case cli of
-    (Make profileName) -> print $ Map.byName profileName
+    (Make profileName) -> BSL8.putStrLn $ Aeson.encode $ Map.byName profileName
     (ToJson filePath) -> print filePath
 --      str <- readFile filePath
 --      case (readEither str) of
