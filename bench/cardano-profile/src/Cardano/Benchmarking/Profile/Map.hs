@@ -118,9 +118,9 @@ profilesNoEra :: Map.Map String Types.Profile
 -- Names:
 -- wb profile all-profiles | jq .[] | jq -r .name | sort | uniq | grep "\-bage"
 profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
-  ----------------------------------------------------------------
+  ------------------------------------------------------------------------------
   -- fast: 2 nodes, FixedLoaded and "--shutdown-on-block-synced 1"
-  ----------------------------------------------------------------
+  ------------------------------------------------------------------------------
   let fast =   dummy
              & P.uniCircle . P.hosts 2
              . P.loopback
@@ -135,11 +135,11 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   , (fast & P.name "fast-notracer"   . P.tracerOff . P.newTracing          )
   ]
   ++
-  -------------------------------------------------------------------
+  ------------------------------------------------------------------------------
   -- ci-test: 2 nodes, FixedLoaded and "--shutdown-on-block-synced 3"
-  -------------------------------------------------------------------
+  ------------------------------------------------------------------------------
   [
-    (dummy { Types.name = "ci-test-dense10",                                      Types.composition = compSoloDense10     , Types.node = nodeTest                                      , Types.tracer = tracerDefault})
+    (dummy { Types.name = "ci-test-dense10", Types.composition = compSoloDense10, Types.node = nodeTest, Types.tracer = tracerDefault})
   ]
   ++
   let ciTest =   dummy
@@ -151,19 +151,36 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
       ciTestLocal     = ciTest & P.uniCircle . P.loopback
       ciTestNomadPerf = ciTest & P.torus     . P.nomadPerf . P.withExplorerNode
   in [
+  -- Local
     (ciTestLocal     & P.name "ci-test"                      . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciTestLocal     & P.name "ci-test-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
   , (ciTestLocal     & P.name "ci-test-plutus"               . P.tracerOn  . P.newTracing . P.p2pOff                 )
   , (ciTestLocal     & P.name "ci-test-rtview"               . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
+  , (ciTestLocal     & P.name "ci-test-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
   , (ciTestLocal     & P.name "ci-test-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                 )
+  -- Nomad perf
   , (ciTestNomadPerf & P.name "ci-test-nomadperf"            . P.tracerOn  . P.newTracing . P.p2pOn                  )
   , (ciTestNomadPerf & P.name "ci-test-nomadperf-nop2p"      . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  -- TODO: FIXME: A non "nop2p" "nomadperf" profile without P2P???
   , (ciTestNomadPerf & P.name "ci-test-oldtracing-nomadperf" . P.tracerOn  . P.oldTracing . P.p2pOff                 )
   ]
   ++
-  ------------------------------------------------------------
+  ------------------------------------------------------------------------------
+  -- epoch transition: 2 nodes, FixedLoaded and "--shutdown-on-slot-synced 900"
+  ------------------------------------------------------------------------------
+  let epochTransition =   dummy
+                        & P.uniCircle . P.hosts 2
+                        . P.loopback
+                        . P.fixedLoaded . P.generatorTps 15
+                        . P.shutdownOnSlot 900
+                        . P.tracerOn . P.newTracing
+                        . P.analysisStandard
+  in [
+    (epochTransition & P.name "epoch-transition")
+  ]
+  ++
+  ------------------------------------------------------------------------------
   -- ci-bench: FixedLoaded and "--shutdown-on-block-synced 15"
-  ------------------------------------------------------------
+  ------------------------------------------------------------------------------
   let ciBench =  dummy
                & P.fixedLoaded . P.generatorTps 15
                . P.shutdownOnBlock 15
@@ -177,34 +194,40 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
       ciBench06Trace     = ciBench06 & P.torus     . P.loopback  . P.tracerWithresources
       ciBench10Local     = ciBench10 & P.uniCircle . P.loopback
   in [
+  -- 2 nodes, local
     (ciBench02Local     & P.name "ci-bench"                      . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench02Local     & P.name "ci-bench-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                 )
-  , (ciBench02Local     & P.name "ci-bench-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
   , (ciBench02Local     & P.name "ci-bench-plutus"               . P.tracerOn  . P.newTracing . P.p2pOff                 )
   , (ciBench02Local     & P.name "ci-bench-plutus-secp-ecdsa"    . P.tracerOn  . P.newTracing . P.p2pOff                 )
   , (ciBench02Local     & P.name "ci-bench-plutus-secp-schnorr"  . P.tracerOn  . P.newTracing . P.p2pOff                 )
   , (ciBench02Local     & P.name "ci-bench-rtview"               . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
+  , (ciBench02Local     & P.name "ci-bench-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
+  , (ciBench02Local     & P.name "ci-bench-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                 )
+  -- 2 nodes, Nomad perf
   , (ciBench02NomadPerf & P.name "ci-bench-nomadperf"            . P.tracerOn  . P.newTracing . P.p2pOn                  )
   , (ciBench02NomadPerf & P.name "ci-bench-nomadperf-nop2p"      . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  -- TODO: FIXME: A non "nop2p" "nomadperf" profile without P2P???
   , (ciBench02NomadPerf & P.name "ci-bench-oldtracing-nomadperf" . P.tracerOn  . P.oldTracing . P.p2pOff                 )
+  -- 6 nodes, local
   , (ciBench06Trace     & P.name "trace-bench"                   . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench06Trace     & P.name "trace-bench-oldtracing"        . P.tracerOn  . P.oldTracing . P.p2pOff                 )
   , (ciBench06Trace     & P.name "trace-bench-rtview"            . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
+  , (ciBench06Trace     & P.name "trace-bench-oldtracing"        . P.tracerOn  . P.oldTracing . P.p2pOff                 )
   , (ciBench06Trace     & P.name "trace-bench-notracer"          . P.tracerOff . P.newTracing . P.p2pOff                 )
+  -- 10 nodes, local
   , (ciBench10Local     & P.name "10"                            . P.tracerOn  . P.newTracing . P.p2pOff                 )
   , (ciBench10Local     & P.name "10-plutus"                     . P.tracerOn  . P.newTracing . P.p2pOff                 )
   , (ciBench10Local     & P.name "10-p2p"                        . P.tracerOn  . P.newTracing . P.p2pOn                  )
   , (ciBench10Local     & P.name "10-notracer"                   . P.tracerOff . P.newTracing . P.p2pOff                 )
   ]
   ++
-    ------------------------------------------------------------
+  ------------------------------------------------------------------------------
   -- forge-stress
-    ------------------------------------------------------------
+  ------------------------------------------------------------------------------
   let forgeStress =   dummy
                     & P.uniCircle
                     . P.loopback
+                    . P.p2pOff
                     . P.fixedLoaded . P.generatorTps 15
-                    . P.newTracing . P.p2pOff
+                    . P.newTracing
                     . P.analysisStandard
       -- "--shutdown-on-slot-synced 2400"
       forgeStressSolo  = forgeStress & P.shutdownOnSlot 2400 . P.hosts 1
@@ -239,8 +262,8 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   -- TODO: This is a special case of forge-stress. Mix both? Still used?
   let dish =   dummy
              & P.uniCircle . P.hosts 3
-             . P.p2pOff
              . P.loopback
+             . P.p2pOff
              . P.fixedLoaded . P.generatorTps 15
              . P.shutdownOnSlot 2400
              . P.tracerOn  . P.newTracing
@@ -252,20 +275,29 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   , (dish & P.name "dish-10M-plutus" )
   ]
   ++
+  ------------------------------------------------------------------------------
   -- No 3 nodes and no "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
+  ------------------------------------------------------------------------------
   let k3 =   dummy
-           & P.hosts 3 . P.uniCircle . P.loopback
+           & P.hosts 3 . P.uniCircle
+           . P.loopback
+           . P.p2pOff
+           . P.fixedLoaded
            . P.shutdownOnOff
+           . P.tracerOn  . P.newTracing
   in [
-    (k3 & P.name "k3-3ep-18kTx-10000kU-1300kD-64kbs-10tps-fixed-loaded" . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (k3 & P.name "k3-3ep-22kTx-10000kU-1300kD-64kbs-fixed-loaded"       . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (k3 & P.name "k3-3ep-5kTx-10000kU-1300kD-64kbs-fixed-loaded"        . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (k3 & P.name "k3-3ep-9kTx-10000kU-1300kD-64kbs-5tps-fixed-loaded"   . P.tracerOn  . P.newTracing . P.p2pOff)
+    (k3 & P.name "k3-3ep-18kTx-10000kU-1300kD-64kbs-10tps-fixed-loaded" )
+  , (k3 & P.name "k3-3ep-22kTx-10000kU-1300kD-64kbs-fixed-loaded"       )
+  , (k3 & P.name "k3-3ep-5kTx-10000kU-1300kD-64kbs-fixed-loaded"        )
+  , (k3 & P.name "k3-3ep-9kTx-10000kU-1300kD-64kbs-5tps-fixed-loaded"   )
   ]
   ++
+  ------------------------------------------------------------------------------
   -- No 6 nodes and no "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
+  ------------------------------------------------------------------------------
   let noCliStop =   dummy
                   & P.hosts 6
+                  . P.fixedLoaded
                   . P.shutdownOnOff
       -- TODO: Why are not all using Torus ????
       noCliStopLocal     = noCliStop & P.uniCircle . P.loopback
@@ -286,6 +318,74 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   , (noCliStopNomadPerf & P.name "oldtracing-nomadperf-nop2p" . P.tracerOn  . P.oldTracing . P.p2pOff)
   ]
   ++
+  ------------------------------------------------------------------------------
+  -- model: 4 nodes, FixedLoaded and "--shutdown-on-slot-synced 56000"
+  ------------------------------------------------------------------------------
+  let model =    dummy
+              & P.uniCircle . P.hosts 4
+              . P.loopback
+              . P.fixedLoaded
+              . P.shutdownOnSlot 56000
+              . P.tracerOn . P.newTracing
+              . P.analysisStandard
+  in [
+    (model & P.name "model-secp-ecdsa-double" )
+  , (model & P.name "model-secp-ecdsa-half"   )
+  , (model & P.name "model-secp-ecdsa-plain"  )
+  , (model & P.name "model-value"             )
+  , (model & P.name "model-value-test"        )
+  ]
+  ++
+  ------------------------------------------------------------------------------
+  -- plutuscall: 6 nodes, FixedLoaded and "--shutdown-on-slot-synced 9000"
+  ------------------------------------------------------------------------------
+  let plutusCall =   dummy
+                   & P.uniCircle . P.hosts 6
+                   . P.loopback
+                   . P.fixedLoaded
+                   . P.shutdownOnSlot 9000
+                   . P.tracerOn . P.newTracing . P.p2pOff
+                   . P.analysisStandard
+  in [
+    (plutusCall & P.name "plutuscall-loop-double"         )
+  , (plutusCall & P.name "plutuscall-loop-half"           )
+  , (plutusCall & P.name "plutuscall-loop-plain"          )
+  , (plutusCall & P.name "plutuscall-secp-ecdsa-double"   )
+  , (plutusCall & P.name "plutuscall-secp-ecdsa-half"     )
+  , (plutusCall & P.name "plutuscall-secp-ecdsa-plain"    )
+  , (plutusCall & P.name "plutuscall-secp-schnorr-double" )
+  , (plutusCall & P.name "plutuscall-secp-schnorr-half"   )
+  , (plutusCall & P.name "plutuscall-secp-schnorr-plain"  )
+  ]
+  ++
+  [
+    (dummy { Types.name = "trace-full",                                           Types.composition = compHexagonTorus    , Types.node = nodeTraceFull                                 , Types.tracer = tracerWithresources})
+  , (dummy { Types.name = "trace-full-rtview",                                    Types.composition = compHexagonTorus    , Types.node = nodeTraceFull                                 , Types.tracer = tracerRtviewWithresources})
+  ]
+  ++
+  ------------------------------------------------------------------------------
+  -- cloud: (52 + 1) nodes, FixedLoaded and "--shutdown-on-slot-synced 56000"
+  ------------------------------------------------------------------------------
+  let cloud =   dummy
+                & P.torusDense . P.hosts 52 . P.withExplorerNode
+                . P.nomadPerf
+                . P.fixedLoaded
+                . P.tracerOn
+                . P.analysisStandard
+      value  = cloud & P.shutdownOnSlot 64000
+      plutus = cloud & P.shutdownOnSlot 72000
+  in [
+    (value  & P.name "value-nomadperf"                   . P.newTracing           )
+  , (value  & P.name "value-nomadperf-nop2p"             . P.newTracing . P.p2pOff)
+  , (value  & P.name "value-oldtracing-nomadperf"        . P.oldTracing           )
+  , (value  & P.name "value-oldtracing-nomadperf-nop2p"  . P.oldTracing . P.p2pOff)
+  , (plutus & P.name "plutus-nomadperf"                  . P.newTracing           )
+  , (plutus & P.name "plutus-nomadperf-nop2p"            . P.newTracing . P.p2pOff)
+  ]
+  ++
+  ------------------------------------------------------------------------------
+  -- chainsync
+  ------------------------------------------------------------------------------
   [
     (dummy { Types.name = "chainsync-early-alonzo",                               Types.composition = compSoloChainsync   , Types.node = nodeNoTracer nodeChainSyncAlo                 , Types.tracer = tracerDefault})
   , (dummy { Types.name = "chainsync-early-alonzo-notracer",                      Types.composition = compSoloChainsync   , Types.node = nodeNoTracer nodeChainSyncAlo                 , Types.tracer = tracerDefault})
@@ -297,56 +397,6 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   , (dummy { Types.name = "chainsync-early-byron",                                Types.composition = compSoloChainsync   , Types.node = nodeNoTracer nodeChainSyncByr                 , Types.tracer = tracerDefault})
   , (dummy { Types.name = "chainsync-early-byron-notracer",                       Types.composition = compSoloChainsync   , Types.node = nodeNoTracer nodeChainSyncByr                 , Types.tracer = tracerDefault})
   , (dummy { Types.name = "chainsync-early-byron-oldtracing",                     Types.composition = compSoloChainsync   , Types.node = nodeOldTracing $ nodeNoTracer nodeChainSyncByr, Types.tracer = tracerDefault})
-  ]
-  ++
-  [
-    (dummy { Types.name = "epoch-transition",                                     Types.composition = compDoubletLoopback , Types.node = nodeEpochTransition                           , Types.tracer = tracerDefault})
-  ]
-  ++
-  ----------------------------------------------------------------
-  -- model: 4 nodes, FixedLoaded and "--shutdown-on-slot-synced 56000"
-  ----------------------------------------------------------------
-  let model =    dummy
-              & P.uniCircle . P.hosts 4
-              . P.loopback
-              . P.fixedLoaded
-              . P.shutdownOnSlot 56000
-              . P.analysisStandard
-  in [
-    (model & P.name "model-secp-ecdsa-double" . P.tracerOn  . P.newTracing)
-  , (model & P.name "model-secp-ecdsa-half"   . P.tracerOn  . P.newTracing)
-  , (model & P.name "model-secp-ecdsa-plain"  . P.tracerOn  . P.newTracing)
-  , (model & P.name "model-value"             . P.tracerOn  . P.newTracing)
-  , (model & P.name "model-value-test"        . P.tracerOn . P.newTracing)
-  ]
-  ++
-  [
-    (dummy { Types.name = "plutuscall-loop-double",                               Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-loop-half",                                 Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-loop-plain",                                Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-ecdsa-double",                         Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-ecdsa-half",                           Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-ecdsa-plain",                          Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-schnorr-double",                       Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-schnorr-half",                         Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutuscall-secp-schnorr-plain",                        Types.composition = compHexagon         , Types.node = nodePlutusCall                                , Types.tracer = tracerDefault})
-  ]
-  ++
-  [
-    (dummy { Types.name = "trace-full",                                           Types.composition = compHexagonTorus    , Types.node = nodeTraceFull                                 , Types.tracer = tracerWithresources})
-  , (dummy { Types.name = "trace-full-rtview",                                    Types.composition = compHexagonTorus    , Types.node = nodeTraceFull                                 , Types.tracer = tracerRtviewWithresources})
-  ]
-  ++
-  [
-    (dummy { Types.name = "value-nomadperf",                                      Types.composition = compComposeFiftyTwo , Types.node = nodeP2P nodeValue                             , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "value-nomadperf-nop2p",                                Types.composition = compComposeFiftyTwo , Types.node = nodeValue                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "value-oldtracing-nomadperf",                           Types.composition = compComposeFiftyTwo , Types.node = nodeOldTracing $ nodeP2P nodeValue            , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "value-oldtracing-nomadperf-nop2p",                     Types.composition = compComposeFiftyTwo , Types.node = nodeOldTracing nodeValue                      , Types.tracer = tracerDefault})
-  ]
-  ++
-  [
-    (dummy { Types.name = "plutus-nomadperf",                                     Types.composition = compComposeFiftyTwo , Types.node = nodeP2P nodePlutus                            , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "plutus-nomadperf-nop2p",                               Types.composition = compComposeFiftyTwo , Types.node = nodePlutus                                    , Types.tracer = tracerDefault})
   ]
 
 --------------------------------------------------------------------------------
@@ -452,92 +502,6 @@ compSoloDense10 = Types.Composition {
 }
 
 {-- Used by:
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 2))' | jq 'map(select(.composition.locations == ["loopback"]))' | jq 'map(.name) | sort'
-[
-  "ci-bench",
-  "ci-bench-notracer",
-  "ci-bench-p2p",
-  "ci-bench-plutus",
-  "ci-bench-plutus-secp-ecdsa",
-  "ci-bench-plutus-secp-schnorr",
-  "ci-test",
-  "ci-test-notracer",
-  "ci-test-p2p",
-  "ci-test-plutus",
-  "ci-test-rtview",
-  "epoch-transition",
-  "fast",
-  "fast-notracer",
-  "fast-oldtracing",
-  "fast-p2p",
-  "fast-plutus",
-]
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 2))' | jq 'map(select(.composition.locations == ["loopback"]))' | jq .[] | jq -c .composition | sort | uniq
-{"locations":["loopback"],"n_bft_hosts":0,"n_singular_hosts":2,"n_dense_hosts":0,"dense_pool_density":1,"with_proxy":false,"with_explorer":false,"topology":"uni-circle","n_hosts":2,"n_pools":2,"n_singular_pools":2,"n_dense_pools":0,"n_pool_hosts":2}
---}
-compDoubletLoopback :: Types.Composition
-compDoubletLoopback = Types.Composition {
-    Types.locations = [Types.Loopback]
-  , Types.n_bft_hosts = 0
-  , Types.n_singular_hosts = 2
-  , Types.n_dense_hosts = 0
-  , Types.dense_pool_density = 1
-  , Types.with_proxy = False
-  , Types.with_explorer = False
-  , Types.topology = Types.UniCircle
-  , Types.with_chaindb_server = Nothing
-  , Types.n_hosts = 2
-  , Types.n_pools = 2
-  , Types.n_singular_pools = 2
-  , Types.n_dense_pools = 0
-  , Types.n_pool_hosts = 2
-}
-
-{-- Used by:
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 6))' | jq 'map(select(.composition.locations == ["loopback"]))' | jq 'map(select(.composition.topology == "uni-circle"))' | jq 'map(.name) | sort'
-[
-  "default",
-  "default-p2p",
-  "devops",
-  "forge-stress-large",
-  "idle",
-  "oldtracing",
-  "plutus",
-  "plutus-secp-ecdsa",
-  "plutus-secp-schnorr",
-  "plutuscall-loop-double",
-  "plutuscall-loop-half",
-  "plutuscall-loop-plain",
-  "plutuscall-secp-ecdsa-double",
-  "plutuscall-secp-ecdsa-half",
-  "plutuscall-secp-ecdsa-plain",
-  "plutuscall-secp-schnorr-double",
-  "plutuscall-secp-schnorr-half",
-  "plutuscall-secp-schnorr-plain",
-  "tracer-only",
-]
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 6))' | jq 'map(select(.composition.locations == ["loopback"]))' | jq 'map(select(.composition.topology == "uni-circle"))' | jq .[] | jq -c .composition | sort | uniq
-{"locations":["loopback"],"n_bft_hosts":0,"n_singular_hosts":6,"n_dense_hosts":0,"dense_pool_density":1,"with_proxy":false,"with_explorer":false,"topology":"uni-circle","n_hosts":6,"n_pools":6,"n_singular_pools":6,"n_dense_pools":0,"n_pool_hosts":6}
---}
-compHexagon :: Types.Composition
-compHexagon = Types.Composition {
-    Types.locations = [Types.Loopback]
-  , Types.n_bft_hosts = 0
-  , Types.n_singular_hosts = 6
-  , Types.n_dense_hosts = 0
-  , Types.dense_pool_density = 1
-  , Types.with_proxy = False
-  , Types.with_explorer = False
-  , Types.topology = Types.UniCircle
-  , Types.with_chaindb_server = Nothing
-  , Types.n_hosts = 6
-  , Types.n_pools = 6
-  , Types.n_singular_pools = 6
-  , Types.n_dense_pools = 0
-  , Types.n_pool_hosts = 6
-}
-
-{-- Used by:
 wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 6))' | jq 'map(select(.composition.locations == ["loopback"]))' | jq 'map(select(.composition.topology != "uni-circle"))' | jq 'map(.name) | sort'
 [
   "trace-bench",
@@ -568,41 +532,6 @@ compHexagonTorus = Types.Composition {
   , Types.n_pool_hosts = 6
 }
 
-{-- Used by:
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 52))' | jq 'map(.name) | sort'
-[
-  "plutus-nomadperf",
-  "plutus-nomadperf-nop2p",
-  "value-nomadperf",
-  "value-nomadperf-nop2p",
-  "value-oldtracing-nomadperf",
-  "value-oldtracing-nomadperf-nop2p",
-]
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 52))' | jq .[] | jq -c .composition | sort | uniq
-{"locations":["eu-central-1","us-east-1","ap-southeast-2"],"n_bft_hosts":0,"n_singular_hosts":52,"n_dense_hosts":0,"dense_pool_density":1,"with_proxy":false,"with_explorer":true,"topology":"torus-dense","n_hosts":52,"n_pools":52,"n_singular_pools":52,"n_dense_pools":0,"n_pool_hosts":52}
---}
-compComposeFiftyTwo :: Types.Composition
-compComposeFiftyTwo = Types.Composition {
-    Types.locations = [
-      Types.AWS Types.EU_CENTRAL_1
-    , Types.AWS Types.US_EAST_1
-    , Types.AWS Types.AP_SOUTHEAST_2
-    ]
-  , Types.n_bft_hosts = 0
-  , Types.n_singular_hosts = 52
-  , Types.n_dense_hosts = 0
-  , Types.dense_pool_density = 1
-  , Types.with_proxy = False
-  , Types.with_explorer = True
-  , Types.topology = Types.TorusDense
-  , Types.with_chaindb_server = Nothing
-  , Types.n_hosts = 52
-  , Types.n_pools = 52
-  , Types.n_singular_pools = 52
-  , Types.n_dense_pools = 0
-  , Types.n_pool_hosts = 52
-}
-
 --------------------------------------------------------------------------------
 
 nodeDefault :: Maybe Int -> Maybe Int -> Types.Node
@@ -615,25 +544,9 @@ nodeDefault maybeSlotShutdown maybeBlockShutdown = Types.Node {
 , Types.verbatim = Types.NodeVerbatim Nothing
 }
 
--- Shutdown on slot 900
-nodeEpochTransition :: Types.Node
-nodeEpochTransition = nodeDefault (Just 900) Nothing
-
 -- Shutdown on slot 1200
 nodeTraceFull :: Types.Node
 nodeTraceFull = nodeDefault (Just 1200) Nothing
-
--- Shutdown on slot 9000
-nodePlutusCall :: Types.Node
-nodePlutusCall = nodeDefault (Just 9000) Nothing
-
--- Shutdown on slot 64000
-nodeValue :: Types.Node
-nodeValue = nodeDefault (Just 64000) Nothing
-
--- Shutdown on slot 72000
-nodePlutus :: Types.Node
-nodePlutus = nodeDefault (Just 72000) Nothing
 
 -- Shutdown on slot 237599
 nodeChainSyncByr :: Types.Node

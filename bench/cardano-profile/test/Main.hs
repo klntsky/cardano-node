@@ -159,6 +159,21 @@ profilesMap = Tasty.testGroup
               (Map.assocs (ans :: Map.Map String Types.Profile))
             )
 --}
+          -- Show the first profile with differences in the Scenario type.
+          mapM_
+            (uncurry $ assertEqual
+              ("Profile == (decode \"" ++ fp ++ "\") - Scenario")
+            )
+            -- Map.Map to keep the key / profile name.
+            (zip
+              (Map.assocs $ Map.map
+                (\p -> Types.scenario p)
+                (ans :: Map.Map String Types.Profile)
+              )
+              (Map.assocs $ Map.map
+                (\p -> Types.scenario p) Profiles.profiles
+              )
+            )
           -- Show the first profile with differences in the Composition type.
           mapM_
             (uncurry $ assertEqual
