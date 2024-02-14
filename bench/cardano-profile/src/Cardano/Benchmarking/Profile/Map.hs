@@ -204,34 +204,36 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                     & P.uniCircle
                     . P.loopback
                     . P.fixedLoaded . P.generatorTps 15
+                    . P.newTracing . P.p2pOff
                     . P.analysisStandard
       -- "--shutdown-on-slot-synced 2400"
-      forgeStressSmall = forgeStress & P.shutdownOnSlot 2400
+      forgeStressSolo  = forgeStress & P.shutdownOnSlot 2400 . P.hosts 1
+      forgeStressSmall = forgeStress & P.shutdownOnSlot 2400 . P.hosts 3
       -- "--shutdown-on-slot-synced 4800"
-      forgeStressLarge = forgeStress & P.shutdownOnSlot 4800
+      forgeStressLarge = forgeStress & P.shutdownOnSlot 4800 . P.hosts 6
   in [
   -- 1 node versions.
-    (forgeStressSmall & P.name "forge-stress-solo"          . P.hosts 1 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStressSmall & P.name "forge-stress-pre-solo"      . P.hosts 1 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStressSmall & P.name "forge-stress-plutus-solo"   . P.hosts 1 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+    (forgeStressSolo  & P.name "forge-stress-solo"          . P.tracerOn                                        )
+  , (forgeStressSolo  & P.name "forge-stress-pre-solo"      . P.tracerOn                                        )
+  , (forgeStressSolo  & P.name "forge-stress-plutus-solo"   . P.tracerOn                                        )
   -- 3 nodes versions.
-  , (forgeStressSmall & P.name "forge-stress"               . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStressSmall & P.name "forge-stress-light"         . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStressSmall & P.name "forge-stress-notracer"      . P.hosts 3 . P.tracerOff . P.newTracing . P.p2pOff                                       )
+  , (forgeStressSmall & P.name "forge-stress"               . P.tracerOn                                        )
+  , (forgeStressSmall & P.name "forge-stress-light"         . P.tracerOn                                        )
+  , (forgeStressSmall & P.name "forge-stress-notracer"      . P.tracerOff                                       )
   -- TODO: FIXME: "forge-stress-p2p" has no P2P enabled!
-  , (forgeStressSmall & P.name "forge-stress-p2p"           . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStressSmall & P.name "forge-stress-plutus"        . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStressSmall & P.name "forge-stress-pre"           . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStressSmall & P.name "forge-stress-pre-notracer"  . P.hosts 3 . P.tracerOff . P.newTracing . P.p2pOff                                       )
-  , (forgeStressSmall & P.name "forge-stress-pre-plutus"    . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsA4m"    . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcAllocSize  4)
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsA4mN3"  . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3 . P.rtsGcAllocSize  4)
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsA64m"   . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcAllocSize 64)
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsA64mN3" . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3 . P.rtsGcAllocSize 64)
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsN3"     . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff . P.rtsThreads 3                      )
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsxn"     . P.hosts 3 . P.tracerOn  . P.newTracing . P.p2pOff                  . P.rtsGcNonMoving   )
+  , (forgeStressSmall & P.name "forge-stress-p2p"           . P.tracerOn                                        )
+  , (forgeStressSmall & P.name "forge-stress-plutus"        . P.tracerOn                                        )
+  , (forgeStressSmall & P.name "forge-stress-pre"           . P.tracerOn                                        )
+  , (forgeStressSmall & P.name "forge-stress-pre-notracer"  . P.tracerOff                                       )
+  , (forgeStressSmall & P.name "forge-stress-pre-plutus"    . P.tracerOn                                        )
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsA4m"    . P.tracerOn                   . P.rtsGcAllocSize  4)
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsA4mN3"  . P.tracerOn  . P.rtsThreads 3 . P.rtsGcAllocSize  4)
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsA64m"   . P.tracerOn                   . P.rtsGcAllocSize 64)
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsA64mN3" . P.tracerOn  . P.rtsThreads 3 . P.rtsGcAllocSize 64)
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsN3"     . P.tracerOn  . P.rtsThreads 3                      )
+  , (forgeStressSmall & P.name "forge-stress-pre-rtsxn"     . P.tracerOn                   . P.rtsGcNonMoving   )
   -- Double nodes and time running version.
-  , (forgeStressLarge & P.name "forge-stress-large"         . P.hosts 6 . P.tracerOn  . P.newTracing . P.p2pOff                                       )
+  , (forgeStressLarge & P.name "forge-stress-large"         . P.tracerOn                                        )
   ]
   ++
   -- TODO: This is a special case of forge-stress. Mix both? Still used?
@@ -265,6 +267,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   let noCliStop =   dummy
                   & P.hosts 6
                   . P.shutdownOnOff
+      -- TODO: Why are not all using Torus ????
       noCliStopLocal     = noCliStop & P.uniCircle . P.loopback
       noCliStopNomadPerf = noCliStop & P.torus     . P.nomadPerf . P.withExplorerNode
   in [
@@ -300,12 +303,21 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
     (dummy { Types.name = "epoch-transition",                                     Types.composition = compDoubletLoopback , Types.node = nodeEpochTransition                           , Types.tracer = tracerDefault})
   ]
   ++
-  [
-    (dummy { Types.name = "model-secp-ecdsa-double",                              Types.composition = compQuadruplet      , Types.node = nodeModel                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "model-secp-ecdsa-half",                                Types.composition = compQuadruplet      , Types.node = nodeModel                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "model-secp-ecdsa-plain",                               Types.composition = compQuadruplet      , Types.node = nodeModel                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "model-value",                                          Types.composition = compQuadruplet      , Types.node = nodeModel                                     , Types.tracer = tracerDefault})
-  , (dummy { Types.name = "model-value-test",                                     Types.composition = compQuadruplet      , Types.node = nodeModel                                     , Types.tracer = tracerDefault})
+  ----------------------------------------------------------------
+  -- model: 4 nodes, FixedLoaded and "--shutdown-on-slot-synced 56000"
+  ----------------------------------------------------------------
+  let model =    dummy
+              & P.uniCircle . P.hosts 4
+              . P.loopback
+              . P.fixedLoaded
+              . P.shutdownOnSlot 56000
+              . P.analysisStandard
+  in [
+    (model & P.name "model-secp-ecdsa-double" . P.tracerOn  . P.newTracing)
+  , (model & P.name "model-secp-ecdsa-half"   . P.tracerOn  . P.newTracing)
+  , (model & P.name "model-secp-ecdsa-plain"  . P.tracerOn  . P.newTracing)
+  , (model & P.name "model-value"             . P.tracerOn  . P.newTracing)
+  , (model & P.name "model-value-test"        . P.tracerOn . P.newTracing)
   ]
   ++
   [
@@ -482,36 +494,6 @@ compDoubletLoopback = Types.Composition {
 }
 
 {-- Used by:
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 4))' | jq 'map(.name) | sort'
-[
-  "model-secp-ecdsa-double",
-  "model-secp-ecdsa-half",
-  "model-secp-ecdsa-plain",
-  "model-value",
-  "model-value-test",
-]
-wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 4))' | jq .[] | jq -c .composition | sort | uniq
-{"locations":["loopback"],"n_bft_hosts":0,"n_singular_hosts":4,"n_dense_hosts":0,"dense_pool_density":1,"with_proxy":false,"with_explorer":false,"topology":"uni-circle","n_hosts":4,"n_pools":4,"n_singular_pools":4,"n_dense_pools":0,"n_pool_hosts":4}
---}
-compQuadruplet :: Types.Composition
-compQuadruplet = Types.Composition {
-    Types.locations = [Types.Loopback]
-  , Types.n_bft_hosts = 0
-  , Types.n_singular_hosts = 4
-  , Types.n_dense_hosts = 0
-  , Types.dense_pool_density = 1
-  , Types.with_proxy = False
-  , Types.with_explorer = False
-  , Types.topology = Types.UniCircle
-  , Types.with_chaindb_server = Nothing
-  , Types.n_hosts = 4
-  , Types.n_pools = 4
-  , Types.n_singular_pools = 4
-  , Types.n_dense_pools = 0
-  , Types.n_pool_hosts = 4
-}
-
-{-- Used by:
 wb profile all-profiles | jq 'map(select(.composition.n_singular_hosts == 6))' | jq 'map(select(.composition.locations == ["loopback"]))' | jq 'map(select(.composition.topology == "uni-circle"))' | jq 'map(.name) | sort'
 [
   "default",
@@ -644,10 +626,6 @@ nodeTraceFull = nodeDefault (Just 1200) Nothing
 -- Shutdown on slot 9000
 nodePlutusCall :: Types.Node
 nodePlutusCall = nodeDefault (Just 9000) Nothing
-
--- Shutdown on slot 56000
-nodeModel :: Types.Node
-nodeModel = nodeDefault (Just 56000) Nothing
 
 -- Shutdown on slot 64000
 nodeValue :: Types.Node

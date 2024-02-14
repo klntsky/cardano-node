@@ -136,18 +136,18 @@ profilesMap = Tasty.testGroup
           -- Check all keys first (without this what's below makes no sense!)
           assertEqual
             ("Profile == (decode \"" ++ fp ++ "\") - Keys")
-            (Map.keys Profiles.profiles)
             (Map.keys (ans :: Map.Map String Types.Profile))
+            (Map.keys Profiles.profiles)
           -- Check names.
           assertEqual
             ("Profile == (decode \"" ++ fp ++ "\") - Name")
             (Map.map
               (\p -> Types.name p)
-              Profiles.profiles
+              (ans :: Map.Map String Types.Profile)
             )
             (Map.map
               (\p -> Types.name p)
-              (ans :: Map.Map String Types.Profile)
+              Profiles.profiles
             )
 {--
           mapM_
@@ -167,11 +167,11 @@ profilesMap = Tasty.testGroup
             -- Map.Map to keep the key / profile name.
             (zip
               (Map.assocs $ Map.map
-                (\p -> Types.composition p) Profiles.profiles
-              )
-              (Map.assocs $ Map.map
                 (\p -> Types.composition p)
                 (ans :: Map.Map String Types.Profile)
+              )
+              (Map.assocs $ Map.map
+                (\p -> Types.composition p) Profiles.profiles
               )
             )
           -- Show the first profile with differences in the Node type.
@@ -182,11 +182,11 @@ profilesMap = Tasty.testGroup
             -- Map.Map to keep the key / profile name.
             (zip
               (Map.assocs $ Map.map
-                (\p -> Types.node p) Profiles.profiles
-              )
-              (Map.assocs $ Map.map
                 (\p -> Types.node p)
                 (ans :: Map.Map String Types.Profile)
+              )
+              (Map.assocs $ Map.map
+                (\p -> Types.node p) Profiles.profiles
               )
             )
           -- Show the first profile with differences in the Tracer type.
@@ -197,11 +197,11 @@ profilesMap = Tasty.testGroup
             -- Map.Map to keep the key / profile name.
             (zip
               (Map.assocs $ Map.map
-                (\p -> Types.tracer p) Profiles.profiles
-              )
-              (Map.assocs $ Map.map
                 (\p -> Types.tracer p)
                 (ans :: Map.Map String Types.Profile)
+              )
+              (Map.assocs $ Map.map
+                (\p -> Types.tracer p) Profiles.profiles
               )
             )
   ]
