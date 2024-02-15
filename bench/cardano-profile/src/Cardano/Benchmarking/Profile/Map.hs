@@ -446,59 +446,15 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
       alonzo = chainsync & P.shutdownOnSlot 38901589
   in [
   -- Byron
-    (byron & P.name "chainsync-early-byron"            . P.tracerOff . P.newTracing . P.p2pOff )
-  , (byron & P.name "chainsync-early-byron-notracer"   . P.tracerOff . P.newTracing . P.p2pOff )
-  , (byron & P.name "chainsync-early-byron-oldtracing" . P.tracerOff . P.oldTracing . P.p2pOff )
+    (byron & P.name "chainsync-early-byron"               . P.tracerOff . P.newTracing . P.p2pOff )
+  , (byron & P.name "chainsync-early-byron-notracer"      . P.tracerOff . P.newTracing . P.p2pOff )
+  , (byron & P.name "chainsync-early-byron-oldtracing"    . P.tracerOff . P.oldTracing . P.p2pOff )
   -- Alonzo
-  , (alonzo  & P.name "chainsync-early-alonzo"            . P.tracerOff . P.newTracing . P.p2pOff)
-  , (alonzo  & P.name "chainsync-early-alonzo-notracer"   . P.tracerOff . P.newTracing . P.p2pOff)
-  , (alonzo  & P.name "chainsync-early-alonzo-oldtracing" . P.tracerOff . P.oldTracing . P.p2pOff)
-  , (alonzo  & P.name "chainsync-early-alonzo-p2p"        . P.tracerOff . P.newTracing . P.p2pOn )
+  , (alonzo  & P.name "chainsync-early-alonzo"            . P.tracerOff . P.newTracing . P.p2pOff )
+  , (alonzo  & P.name "chainsync-early-alonzo-notracer"   . P.tracerOff . P.newTracing . P.p2pOff )
+  , (alonzo  & P.name "chainsync-early-alonzo-p2p"        . P.tracerOff . P.newTracing . P.p2pOn  )
+  , (alonzo  & P.name "chainsync-early-alonzo-oldtracing" . P.tracerOff . P.oldTracing . P.p2pOff )
   ]
-
---------------------------------------------------------------------------------
-
-{-- jq compositions
-
-    { composition:
-      { n_singular_hosts:               1
-      , n_dense_hosts:                  0
-      }
-    } as $solo
-  |
-    { composition:
-      { n_singular_hosts:               0
-      , n_dense_hosts:                  1
-      , dense_pool_density:             10
-      }
-    } as $solo_dense10
-  |
-    { composition:
-      { n_singular_hosts:               2
-      , n_dense_hosts:                  0
-      }
-    } as $doublet
-  |
-    { composition:
-      { n_singular_hosts:               3
-      , n_dense_hosts:                  0
-      }
-    } as $triplet
-  |
-    { composition:
-      { n_singular_hosts:               52
-      , n_dense_hosts:                  0
-      }
-    } as $compose_fiftytwo
-  |
-    { composition:
-      { n_singular_hosts:               0
-      , n_dense_hosts:                  0
-      , with_chaindb_server:            true
-      , with_explorer:                  true
-      }
-    } as $chainsync_cluster
---}
 
 --------------------------------------------------------------------------------
 
