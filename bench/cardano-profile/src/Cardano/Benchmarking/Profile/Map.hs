@@ -308,6 +308,33 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- 6 nodes and no "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
   ------------------------------------------------------------------------------
+  let idle =   dummy
+             & P.uniCircle . P.hosts 6
+             . P.loopback
+             . P.p2pOff
+             . P.idle
+             . P.shutdownOnOff
+  in [
+    (idle & P.name "devops" . P.tracerOn  . P.newTracing . P.p2pOff)
+  , (idle & P.name "idle"   . P.tracerOn  . P.newTracing . P.p2pOff)
+  ]
+  ++
+  ------------------------------------------------------------------------------
+  -- 6 nodes and no "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
+  ------------------------------------------------------------------------------
+  let tracerOnly =   dummy
+                   & P.uniCircle . P.hosts 6
+                   . P.loopback
+                   . P.p2pOff
+                   . P.tracerOnly
+                   . P.shutdownOnOff
+  in [
+    (tracerOnly & P.name "tracer-only" . P.tracerOn  . P.newTracing . P.p2pOff)
+  ]
+  ++
+  ------------------------------------------------------------------------------
+  -- 6 nodes and no "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
+  ------------------------------------------------------------------------------
   let noCliStop =   dummy
                   & P.hosts 6
                   . P.fixedLoaded
@@ -318,13 +345,10 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   in [
     (noCliStopLocal     & P.name "default"                    . P.tracerOn  . P.newTracing . P.p2pOff)
   , (noCliStopLocal     & P.name "default-p2p"                . P.tracerOn  . P.newTracing . P.p2pOn )
-  , (noCliStopLocal     & P.name "devops"                     . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (noCliStopLocal     & P.name "idle"                       . P.tracerOn  . P.newTracing . P.p2pOff)
   , (noCliStopLocal     & P.name "oldtracing"                 . P.tracerOn  . P.oldTracing . P.p2pOff)
   , (noCliStopLocal     & P.name "plutus"                     . P.tracerOn  . P.newTracing . P.p2pOff)
   , (noCliStopLocal     & P.name "plutus-secp-ecdsa"          . P.tracerOn  . P.newTracing . P.p2pOff)
   , (noCliStopLocal     & P.name "plutus-secp-schnorr"        . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (noCliStopLocal     & P.name "tracer-only"                . P.tracerOn  . P.newTracing . P.p2pOff)
   , (noCliStopNomadPerf & P.name "default-nomadperf"          . P.tracerOn  . P.newTracing . P.p2pOn )
   , (noCliStopNomadPerf & P.name "default-nomadperf-nop2p"    . P.tracerOn  . P.newTracing . P.p2pOff)
   , (noCliStopNomadPerf & P.name "oldtracing-nomadperf"       . P.tracerOn  . P.oldTracing . P.p2pOn )

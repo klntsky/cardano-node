@@ -160,7 +160,6 @@ profilesMap = Tasty.testGroup
             )
 --}
           -- Show the first profile with differences in the Scenario type.
-{--
           mapM_
             (uncurry $ assertEqual
               ("Profile == (decode \"" ++ fp ++ "\") - Scenario")
@@ -175,7 +174,6 @@ profilesMap = Tasty.testGroup
                 (\p -> Types.scenario p) Profiles.profiles
               )
             )
---}
           -- Show the first profile with differences in the Composition type.
           mapM_
             (uncurry $ assertEqual

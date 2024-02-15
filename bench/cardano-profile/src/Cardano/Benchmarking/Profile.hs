@@ -11,7 +11,7 @@ module Cardano.Benchmarking.Profile (
   , uniCircle, torus, torusDense
   , hosts, pools, hostsChainsync, withExplorerNode
   , withChaindbServer
-  , idle, fixedLoaded, chainsync
+  , idle, tracerOnly, fixedLoaded, chainsync
   , shutdownOnSlot, shutdownOnBlock, shutdownOnOff
   , p2pOn, p2pOff
   , tracerOn, tracerOff
@@ -115,6 +115,9 @@ withChaindbServer = comp (\c -> c {Types.with_chaindb_server = Just True})
 
 idle :: Types.Profile -> Types.Profile
 idle p = p {Types.scenario = Types.Idle}
+
+tracerOnly :: Types.Profile -> Types.Profile
+tracerOnly p = p {Types.scenario = Types.TracerOnly}
 
 fixedLoaded :: Types.Profile -> Types.Profile
 fixedLoaded p = p {Types.scenario = Types.FixedLoaded}
