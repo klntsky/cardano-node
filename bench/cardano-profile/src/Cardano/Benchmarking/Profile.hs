@@ -9,9 +9,9 @@ module Cardano.Benchmarking.Profile (
   , name, desc
   , loopback, nomadPerf
   , uniCircle, torus, torusDense
-  , hosts, pools, chainsync, withExplorerNode
+  , hosts, pools, hostsChainsync, withExplorerNode
   , withChaindbServer
-  , idle, fixedLoaded
+  , idle, fixedLoaded, chainsync
   , shutdownOnSlot, shutdownOnBlock, shutdownOnOff
   , p2pOn, p2pOff
   , tracerOn, tracerOff
@@ -64,7 +64,7 @@ torus :: Types.Profile -> Types.Profile
 torus = comp (\c -> c {Types.topology = Types.Torus})
 
 torusDense :: Types.Profile -> Types.Profile
-torusDense = comp (\c -> c {Types.topology = Types.Torus})
+torusDense = comp (\c -> c {Types.topology = Types.TorusDense})
 
 hosts :: Int -> Types.Profile -> Types.Profile
 hosts size = comp (\c -> c {
@@ -92,8 +92,8 @@ pools size = comp (\c -> c {
   , Types.n_pool_hosts = 1
 })
 
-chainsync :: Int -> Types.Profile -> Types.Profile
-chainsync size = comp (\c -> c {
+hostsChainsync :: Int -> Types.Profile -> Types.Profile
+hostsChainsync size = comp (\c -> c {
     Types.n_bft_hosts = 0
   , Types.n_singular_hosts = 0
   , Types.n_dense_hosts = 0
@@ -118,6 +118,9 @@ idle p = p {Types.scenario = Types.Idle}
 
 fixedLoaded :: Types.Profile -> Types.Profile
 fixedLoaded p = p {Types.scenario = Types.FixedLoaded}
+
+chainsync :: Types.Profile -> Types.Profile
+chainsync p = p {Types.scenario = Types.Chainsync}
 
 --------------------------------------------------------------------------------
 
