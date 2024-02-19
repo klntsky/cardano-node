@@ -6,20 +6,44 @@
 
 module Cardano.Benchmarking.Profile (
     Types.Profile (Profile)
+  -- Name and description.
   , name, desc
-  , loopback, nomadPerf
+
+  -- Composition topology.
   , uniCircle, torus, torusDense
+  -- Composition location.
+  , loopback, nomadPerf
+  -- Composition size.
   , hosts, pools, hostsChainsync, withExplorerNode
   , withChaindbServer
+
+ -- Genesis
+  , utxo, delegators, epochLength, parameterK
+
+  -- Scenario.
   , idle, tracerOnly, fixedLoaded, chainsync
+
+  -- Node's --shutdown-on-*-sync.
   , shutdownOnSlot, shutdownOnBlock, shutdownOnOff
+  -- Node's p2p flag.
   , p2pOn, p2pOff
+  -- Node's tracer flag.
   , tracerOn, tracerOff
+  -- Node's tracer type.
   , newTracing, oldTracing
+  -- Node's RTS params.
   , rtsGcNonMoving, rtsGcAllocSize, rtsThreads
+
+  -- Tracer's params.
   , tracerRtview, tracerWithresources
+
+  -- Generator params.
   , generatorTps
+
+  -- Analysis params.
   , analysisOff, analysisStandard, analysisPerformance
+  , analysisSizeSmall, analysisSizeModerate, analysisSizeFull
+  , analysisUnitary, analysisEpoch3Plus
 ) where
 
 import           Prelude hiding (id)
@@ -43,6 +67,15 @@ desc str = \p -> p {Types.desc = Just str}
 comp :: (Types.Composition -> Types.Composition) -> Types.Profile -> Types.Profile
 comp f p = p {Types.composition = f (Types.composition p)}
 
+uniCircle :: Types.Profile -> Types.Profile
+uniCircle = comp (\c -> c {Types.topology = Types.UniCircle})
+
+torus :: Types.Profile -> Types.Profile
+torus = comp (\c -> c {Types.topology = Types.Torus})
+
+torusDense :: Types.Profile -> Types.Profile
+torusDense = comp (\c -> c {Types.topology = Types.TorusDense})
+
 loopback :: Types.Profile -> Types.Profile
 loopback = comp (\c -> c {
   Types.locations = [Types.Loopback]
@@ -56,15 +89,6 @@ nomadPerf = comp (\c -> c {
   , Types.AWS Types.AP_SOUTHEAST_2
   ]
 })
-
-uniCircle :: Types.Profile -> Types.Profile
-uniCircle = comp (\c -> c {Types.topology = Types.UniCircle})
-
-torus :: Types.Profile -> Types.Profile
-torus = comp (\c -> c {Types.topology = Types.Torus})
-
-torusDense :: Types.Profile -> Types.Profile
-torusDense = comp (\c -> c {Types.topology = Types.TorusDense})
 
 hosts :: Int -> Types.Profile -> Types.Profile
 hosts size = comp (\c -> c {
@@ -110,6 +134,23 @@ withExplorerNode = comp (\c -> c {Types.with_explorer = True})
 
 withChaindbServer :: Types.Profile -> Types.Profile
 withChaindbServer = comp (\c -> c {Types.with_chaindb_server = Just True})
+
+--------------------------------------------------------------------------------
+
+genesis :: (Types.Genesis -> Types.Genesis) -> Types.Profile -> Types.Profile
+genesis f p = p {Types.genesis = f (Types.genesis p)}
+
+utxo :: Int -> Types.Profile -> Types.Profile
+utxo i = genesis (\g -> g {Types.utxo = i})
+
+delegators :: Int -> Types.Profile -> Types.Profile
+delegators i = genesis (\g -> g {Types.delegators = i})
+
+epochLength :: Int -> Types.Profile -> Types.Profile
+epochLength i = genesis (\g -> g {Types.epoch_length = i})
+
+parameterK :: Int -> Types.Profile -> Types.Profile
+parameterK i = genesis (\g -> g {Types.parameter_k = i})
 
 --------------------------------------------------------------------------------
 
@@ -206,5 +247,23 @@ analysisStandard = analysis (\a -> a {Types.analysisType = Just "standard"})
 
 analysisPerformance :: Types.Profile -> Types.Profile
 analysisPerformance = analysis (\a -> a {Types.analysisType = Just "performance"})
+
+analysisFiltersAppend :: String -> Types.Profile -> Types.Profile
+analysisFiltersAppend str = analysis (\a -> a {Types.filters = (Types.filters a) ++ [str]})
+
+analysisSizeSmall :: Types.Profile -> Types.Profile
+analysisSizeSmall = analysisFiltersAppend "size-small"
+
+analysisSizeModerate :: Types.Profile -> Types.Profile
+analysisSizeModerate = analysisFiltersAppend "size-moderate"
+
+analysisSizeFull :: Types.Profile -> Types.Profile
+analysisSizeFull = analysisFiltersAppend "size-full"
+
+analysisUnitary :: Types.Profile -> Types.Profile
+analysisUnitary = analysisFiltersAppend "unitary"
+
+analysisEpoch3Plus :: Types.Profile -> Types.Profile
+analysisEpoch3Plus = analysisFiltersAppend "epoch3+"
 
 --------------------------------------------------------------------------------

@@ -13,6 +13,7 @@ module Cardano.Benchmarking.Profile.Map (
 
 import           Prelude
 import           Data.Function ((&))
+
 import qualified Data.Map.Strict as Map
 import qualified Data.Scientific as Scientific
 
@@ -70,7 +71,24 @@ dummy = Types.Profile {
     , Types.n_pool_hosts = 0
   }
   , Types.era = Types.Allegra
---  , Types.genesis = Nothing
+  , Types.genesis = Types.Genesis {
+      Types.network_magic = 0
+    , Types.single_shot = False
+    , Types.per_pool_balance = 0
+    , Types.funds_balance = 0
+    , Types.utxo = 0
+    , Types.active_slots_coeff = 0
+    , Types.epoch_length = 0
+    , Types.parameter_k = 0
+    , Types.slot_duration = 0
+    , Types.extra_future_offset = 0
+    , Types.pparamsEpoch = 0
+    , Types.delegators = 0
+    , Types.shelley = mempty
+    , Types.alonzo = mempty
+    , Types.pool_coin = 0
+    , Types.delegator_coin = 0
+  }
   , Types.scenario = Types.Idle
   , Types.node = Types.Node {
       Types.rts_flags_override = []
@@ -124,15 +142,17 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   let fast =   dummy
              & P.uniCircle . P.hosts 2
              . P.loopback
+             . P.utxo 0 . P.delegators 0
+             . P.epochLength 600 . P.parameterK 3
              . P.fixedLoaded . P.generatorTps 15
              . P.shutdownOnBlock 1
              . P.analysisStandard
   in [
-    (fast & P.name "fast"            . P.tracerOn  . P.newTracing          )
-  , (fast & P.name "fast-plutus"     . P.tracerOn  . P.newTracing          )
-  , (fast & P.name "fast-p2p"        . P.tracerOn  . P.newTracing . P.p2pOn)
-  , (fast & P.name "fast-oldtracing" . P.tracerOn  . P.oldTracing          )
-  , (fast & P.name "fast-notracer"   . P.tracerOff . P.newTracing          )
+    (fast & P.name "fast"            . P.tracerOn  . P.newTracing                                )
+  , (fast & P.name "fast-plutus"     . P.tracerOn  . P.newTracing           . P.analysisSizeSmall)
+  , (fast & P.name "fast-p2p"        . P.tracerOn  . P.newTracing . P.p2pOn                      )
+  , (fast & P.name "fast-oldtracing" . P.tracerOn  . P.oldTracing                                )
+  , (fast & P.name "fast-notracer"   . P.tracerOff . P.newTracing                                )
   ]
   ++
   ------------------------------------------------------------------------------
@@ -140,6 +160,8 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   let ciTest =   dummy
                & P.hosts 2
+               . P.utxo 0 . P.delegators 0
+               . P.epochLength 600 . P.parameterK 3
                . P.fixedLoaded . P.generatorTps 15
                . P.shutdownOnBlock 3
                . P.analysisStandard
@@ -148,16 +170,16 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
       ciTestNomadPerf = ciTest & P.torus     . P.nomadPerf . P.withExplorerNode
   in [
   -- Local
-    (ciTestLocal     & P.name "ci-test"                      . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciTestLocal     & P.name "ci-test-plutus"               . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciTestLocal     & P.name "ci-test-rtview"               . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
-  , (ciTestLocal     & P.name "ci-test-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
-  , (ciTestLocal     & P.name "ci-test-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                 )
+    (ciTestLocal     & P.name "ci-test"                      . P.tracerOn  . P.newTracing . P.p2pOff                  )
+  , (ciTestLocal     & P.name "ci-test-plutus"               . P.tracerOn  . P.newTracing . P.p2pOff                  . P.analysisSizeSmall)
+  , (ciTestLocal     & P.name "ci-test-rtview"               . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview )
+  , (ciTestLocal     & P.name "ci-test-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                   )
+  , (ciTestLocal     & P.name "ci-test-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                  )
   -- Nomad perf
-  , (ciTestNomadPerf & P.name "ci-test-nomadperf"            . P.tracerOn  . P.newTracing . P.p2pOn                  )
-  , (ciTestNomadPerf & P.name "ci-test-nomadperf-nop2p"      . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciTestNomadPerf & P.name "ci-test-nomadperf"            . P.tracerOn  . P.newTracing . P.p2pOn                   )
+  , (ciTestNomadPerf & P.name "ci-test-nomadperf-nop2p"      . P.tracerOn  . P.newTracing . P.p2pOff                  )
   -- TODO: FIXME: A non "nop2p" "nomadperf" profile without P2P???
-  , (ciTestNomadPerf & P.name "ci-test-oldtracing-nomadperf" . P.tracerOn  . P.oldTracing . P.p2pOff                 )
+  , (ciTestNomadPerf & P.name "ci-test-oldtracing-nomadperf" . P.tracerOn  . P.oldTracing . P.p2pOff                  )
   ]
   ++
   ------------------------------------------------------------------------------
@@ -167,6 +189,8 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                     & P.uniCircle . P.pools 10
                     . P.loopback
                     . P.p2pOff
+                    . P.utxo 0 . P.delegators 0
+                    . P.epochLength 600 . P.parameterK 3
                     . P.fixedLoaded . P.generatorTps 15
                     . P.shutdownOnBlock 3
                     . P.tracerOn  . P.newTracing
@@ -181,6 +205,8 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   let epochTransition =   dummy
                         & P.uniCircle . P.hosts 2
                         . P.loopback
+                        . P.utxo 0 . P.delegators 0
+                        . P.epochLength 600 . P.parameterK 3
                         . P.fixedLoaded . P.generatorTps 15
                         . P.shutdownOnSlot 900
                         . P.tracerOn . P.newTracing
@@ -194,11 +220,12 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   let ciBench =  dummy
                & P.fixedLoaded . P.generatorTps 15
+               . P.epochLength 600 . P.parameterK 3
                . P.shutdownOnBlock 15
                . P.analysisStandard
-      ciBench02  = ciBench & P.hosts  2
-      ciBench06  = ciBench & P.hosts  6
-      ciBench10  = ciBench & P.hosts 10
+      ciBench02  = ciBench & P.hosts  2 . P.utxo 500000 . P.delegators 100000
+      ciBench06  = ciBench & P.hosts  6 . P.utxo      0 . P.delegators      0
+      ciBench10  = ciBench & P.hosts 10 . P.utxo 500000 . P.delegators 100000
       -- TODO: Why are not all using UniCircle ????
       ciBench02Local     = ciBench02 & P.uniCircle . P.loopback
       ciBench02NomadPerf = ciBench02 & P.torus     . P.nomadPerf . P.withExplorerNode
@@ -206,28 +233,28 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
       ciBench10Local     = ciBench10 & P.uniCircle . P.loopback
   in [
   -- 2 nodes, local
-    (ciBench02Local     & P.name "ci-bench"                      . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench02Local     & P.name "ci-bench-plutus"               . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench02Local     & P.name "ci-bench-plutus-secp-ecdsa"    . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench02Local     & P.name "ci-bench-plutus-secp-schnorr"  . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench02Local     & P.name "ci-bench-rtview"               . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
-  , (ciBench02Local     & P.name "ci-bench-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                  )
-  , (ciBench02Local     & P.name "ci-bench-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                 )
+    (ciBench02Local     & P.name "ci-bench"                      . P.tracerOn  . P.newTracing . P.p2pOff                  )
+  , (ciBench02Local     & P.name "ci-bench-plutus"               . P.tracerOn  . P.newTracing . P.p2pOff                  . P.analysisSizeSmall)
+  , (ciBench02Local     & P.name "ci-bench-plutus-secp-ecdsa"    . P.tracerOn  . P.newTracing . P.p2pOff                  . P.analysisSizeSmall)
+  , (ciBench02Local     & P.name "ci-bench-plutus-secp-schnorr"  . P.tracerOn  . P.newTracing . P.p2pOff                  . P.analysisSizeSmall)
+  , (ciBench02Local     & P.name "ci-bench-rtview"               . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview )
+  , (ciBench02Local     & P.name "ci-bench-p2p"                  . P.tracerOn  . P.newTracing . P.p2pOn                   )
+  , (ciBench02Local     & P.name "ci-bench-notracer"             . P.tracerOff . P.newTracing . P.p2pOff                  )
   -- 2 nodes, Nomad perf
-  , (ciBench02NomadPerf & P.name "ci-bench-nomadperf"            . P.tracerOn  . P.newTracing . P.p2pOn                  )
-  , (ciBench02NomadPerf & P.name "ci-bench-nomadperf-nop2p"      . P.tracerOn  . P.newTracing . P.p2pOff                 )
+  , (ciBench02NomadPerf & P.name "ci-bench-nomadperf"            . P.tracerOn  . P.newTracing . P.p2pOn                   )
+  , (ciBench02NomadPerf & P.name "ci-bench-nomadperf-nop2p"      . P.tracerOn  . P.newTracing . P.p2pOff                  )
   -- TODO: FIXME: A non "nop2p" "nomadperf" profile without P2P???
-  , (ciBench02NomadPerf & P.name "ci-bench-oldtracing-nomadperf" . P.tracerOn  . P.oldTracing . P.p2pOff                 )
+  , (ciBench02NomadPerf & P.name "ci-bench-oldtracing-nomadperf" . P.tracerOn  . P.oldTracing . P.p2pOff                  )
   -- 6 nodes, local
-  , (ciBench06Trace     & P.name "trace-bench"                   . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench06Trace     & P.name "trace-bench-rtview"            . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview)
-  , (ciBench06Trace     & P.name "trace-bench-oldtracing"        . P.tracerOn  . P.oldTracing . P.p2pOff                 )
-  , (ciBench06Trace     & P.name "trace-bench-notracer"          . P.tracerOff . P.newTracing . P.p2pOff                 )
+  , (ciBench06Trace     & P.name "trace-bench"                   . P.tracerOn  . P.newTracing . P.p2pOff                  )
+  , (ciBench06Trace     & P.name "trace-bench-rtview"            . P.tracerOn  . P.newTracing . P.p2pOff . P.tracerRtview )
+  , (ciBench06Trace     & P.name "trace-bench-oldtracing"        . P.tracerOn  . P.oldTracing . P.p2pOff                  )
+  , (ciBench06Trace     & P.name "trace-bench-notracer"          . P.tracerOff . P.newTracing . P.p2pOff                  )
   -- 10 nodes, local
-  , (ciBench10Local     & P.name "10"                            . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench10Local     & P.name "10-plutus"                     . P.tracerOn  . P.newTracing . P.p2pOff                 )
-  , (ciBench10Local     & P.name "10-p2p"                        . P.tracerOn  . P.newTracing . P.p2pOn                  )
-  , (ciBench10Local     & P.name "10-notracer"                   . P.tracerOff . P.newTracing . P.p2pOff                 )
+  , (ciBench10Local     & P.name "10"                            . P.tracerOn  . P.newTracing . P.p2pOff                  )
+  , (ciBench10Local     & P.name "10-plutus"                     . P.tracerOn  . P.newTracing . P.p2pOff                  . P.analysisSizeSmall)
+  , (ciBench10Local     & P.name "10-p2p"                        . P.tracerOn  . P.newTracing . P.p2pOn                   )
+  , (ciBench10Local     & P.name "10-notracer"                   . P.tracerOff . P.newTracing . P.p2pOff                  )
   ]
   ++
   ------------------------------------------------------------------------------
@@ -237,37 +264,40 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                     & P.uniCircle
                     . P.loopback
                     . P.p2pOff
+                    . P.epochLength 600 . P.parameterK 3
                     . P.fixedLoaded . P.generatorTps 15
                     . P.newTracing
                     . P.analysisStandard
       -- "--shutdown-on-slot-synced 2400"
-      forgeStressSolo  = forgeStress & P.shutdownOnSlot 2400 . P.hosts 1
-      forgeStressSmall = forgeStress & P.shutdownOnSlot 2400 . P.hosts 3
+      forgeStressSolo     = forgeStress      & P.shutdownOnSlot 2400 . P.hosts 1 . P.utxo 10000000 . P.delegators 1300000
+      forgeStressSoloPre  = forgeStressSolo  &                                     P.utxo  4000000 . P.delegators 1000000
+      forgeStressSmall    = forgeStress      & P.shutdownOnSlot 2400 . P.hosts 3 . P.utxo 10000000 . P.delegators 1300000
+      forgeStressSmallPre = forgeStressSmall &                                     P.utxo  4000000 . P.delegators 1000000
       -- "--shutdown-on-slot-synced 4800"
-      forgeStressLarge = forgeStress & P.shutdownOnSlot 4800 . P.hosts 6
+      forgeStressLarge    = forgeStress & P.shutdownOnSlot 4800 . P.hosts 6 . P.utxo 10000000 . P.delegators 1300000
   in [
   -- 1 node versions.
-    (forgeStressSolo  & P.name "forge-stress-solo"          . P.tracerOn                                        )
-  , (forgeStressSolo  & P.name "forge-stress-pre-solo"      . P.tracerOn                                        )
-  , (forgeStressSolo  & P.name "forge-stress-plutus-solo"   . P.tracerOn                                        )
+    (forgeStressSolo       & P.name "forge-stress-solo"          . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStressSoloPre    & P.name "forge-stress-pre-solo"      . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStressSolo       & P.name "forge-stress-plutus-solo"   . P.tracerOn                                         . P.analysisSizeSmall )
   -- 3 nodes versions.
-  , (forgeStressSmall & P.name "forge-stress"               . P.tracerOn                                        )
-  , (forgeStressSmall & P.name "forge-stress-light"         . P.tracerOn                                        )
-  , (forgeStressSmall & P.name "forge-stress-notracer"      . P.tracerOff                                       )
+  , (forgeStressSmall      & P.name "forge-stress"               . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStressSmallPre   & P.name "forge-stress-light"         . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStressSmall      & P.name "forge-stress-notracer"      . P.tracerOff                                        . P.analysisUnitary   )
   -- TODO: FIXME: "forge-stress-p2p" has no P2P enabled!
-  , (forgeStressSmall & P.name "forge-stress-p2p"           . P.tracerOn                                        )
-  , (forgeStressSmall & P.name "forge-stress-plutus"        . P.tracerOn                                        )
-  , (forgeStressSmall & P.name "forge-stress-pre"           . P.tracerOn                                        )
-  , (forgeStressSmall & P.name "forge-stress-pre-plutus"    . P.tracerOn                                        )
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsA4m"    . P.tracerOn                   . P.rtsGcAllocSize  4)
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsA64m"   . P.tracerOn                   . P.rtsGcAllocSize 64)
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsN3"     . P.tracerOn  . P.rtsThreads 3                      )
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsA4mN3"  . P.tracerOn  . P.rtsThreads 3 . P.rtsGcAllocSize  4)
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsA64mN3" . P.tracerOn  . P.rtsThreads 3 . P.rtsGcAllocSize 64)
-  , (forgeStressSmall & P.name "forge-stress-pre-rtsxn"     . P.tracerOn                   . P.rtsGcNonMoving   )
-  , (forgeStressSmall & P.name "forge-stress-pre-notracer"  . P.tracerOff                                       )
+  , (forgeStressSmall      & P.name "forge-stress-p2p"           . P.tracerOn                                         . P.analysisSizeSmall )
+  , (forgeStressSmall      & P.name "forge-stress-plutus"        . P.tracerOn                                         . P.analysisSizeSmall )
+  , (forgeStressSmallPre   & P.name "forge-stress-pre"           . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStressSmallPre   & P.name "forge-stress-pre-plutus"    . P.tracerOn                                         . P.analysisSizeSmall )
+  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsA4m"    . P.tracerOn                   . P.rtsGcAllocSize  4 . P.analysisUnitary   )
+  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsA64m"   . P.tracerOn                   . P.rtsGcAllocSize 64 . P.analysisUnitary   )
+  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsN3"     . P.tracerOn  . P.rtsThreads 3                       . P.analysisUnitary   )
+  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsA4mN3"  . P.tracerOn  . P.rtsThreads 3 . P.rtsGcAllocSize  4 . P.analysisUnitary   )
+  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsA64mN3" . P.tracerOn  . P.rtsThreads 3 . P.rtsGcAllocSize 64 . P.analysisUnitary   )
+  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsxn"     . P.tracerOn                   . P.rtsGcNonMoving    . P.analysisUnitary   )
+  , (forgeStressSmallPre   & P.name "forge-stress-pre-notracer"  . P.tracerOff                                        . P.analysisUnitary   )
   -- Double nodes and time running version.
-  , (forgeStressLarge & P.name "forge-stress-large"         . P.tracerOn                                        )
+  , (forgeStressLarge      & P.name "forge-stress-large"         . P.tracerOn                                         . P.analysisEpoch3Plus)
   ]
   ++
   ------------------------------------------------------------------------------
@@ -277,15 +307,18 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
              & P.uniCircle . P.hosts 3
              . P.loopback
              . P.p2pOff
+             . P.epochLength 600 . P.parameterK 3
              . P.fixedLoaded . P.generatorTps 15
              . P.shutdownOnSlot 2400
              . P.tracerOn  . P.newTracing
              . P.analysisStandard
+      dish30M = dish & P.utxo 30000000 . P.delegators 0
+      dish10M = dish & P.utxo 10000000 . P.delegators 0
   in [
-    (dish & P.name "dish"            )
-  , (dish & P.name "dish-plutus"     )
-  , (dish & P.name "dish-10M"        )
-  , (dish & P.name "dish-10M-plutus" )
+    (dish30M & P.name "dish"            . P.analysisUnitary  )
+  , (dish30M & P.name "dish-plutus"     . P.analysisSizeSmall)
+  , (dish10M & P.name "dish-10M"        . P.analysisUnitary  )
+  , (dish10M & P.name "dish-10M-plutus" . P.analysisSizeSmall)
   ]
   ++
   ------------------------------------------------------------------------------
@@ -295,9 +328,12 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
            & P.uniCircle . P.hosts 3
            . P.loopback
            . P.p2pOff
+           . P.utxo 10000000 . P.delegators 1300000
+           . P.epochLength 600 . P.parameterK 3
            . P.fixedLoaded
            . P.shutdownOnOff
            . P.tracerOn  . P.newTracing
+           . P.analysisStandard . P.analysisUnitary
   in [
     (k3 & P.name "k3-3ep-18kTx-10000kU-1300kD-64kbs-10tps-fixed-loaded" )
   , (k3 & P.name "k3-3ep-22kTx-10000kU-1300kD-64kbs-fixed-loaded"       )
@@ -312,11 +348,13 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
              & P.uniCircle . P.hosts 6
              . P.loopback
              . P.p2pOff
+             . P.utxo 0 . P.delegators 6
              . P.idle
              . P.shutdownOnOff
+             . P.analysisUnitary
   in [
-    (idle & P.name "devops" . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (idle & P.name "idle"   . P.tracerOn  . P.newTracing . P.p2pOff)
+    (idle & P.name "devops" . P.epochLength 1000 . P.parameterK 10 . P.tracerOn  . P.newTracing . P.p2pOff . P.analysisOff)
+  , (idle & P.name "idle"   . P.epochLength 600 . P.parameterK   3 . P.tracerOn  . P.newTracing . P.p2pOff . P.analysisStandard)
   ]
   ++
   ------------------------------------------------------------------------------
@@ -326,8 +364,11 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                    & P.uniCircle . P.hosts 6
                    . P.loopback
                    . P.p2pOff
+                   . P.utxo 0 . P.delegators 6
+                   . P.epochLength 600 . P.parameterK 3
                    . P.tracerOnly
                    . P.shutdownOnOff
+                   . P.analysisStandard . P.analysisUnitary
   in [
     (tracerOnly & P.name "tracer-only" . P.tracerOn  . P.newTracing . P.p2pOff)
   ]
@@ -338,21 +379,24 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   let noCliStop =   dummy
                   & P.hosts 6
                   . P.fixedLoaded
+                  . P.utxo 0 . P.delegators 6
+                  . P.epochLength 600 . P.parameterK 3
                   . P.shutdownOnOff
+                  . P.analysisStandard
       -- TODO: Why are not all using Torus ????
       noCliStopLocal     = noCliStop & P.uniCircle . P.loopback
       noCliStopNomadPerf = noCliStop & P.torus     . P.nomadPerf . P.withExplorerNode
   in [
-    (noCliStopLocal     & P.name "default"                    . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (noCliStopLocal     & P.name "default-p2p"                . P.tracerOn  . P.newTracing . P.p2pOn )
-  , (noCliStopLocal     & P.name "oldtracing"                 . P.tracerOn  . P.oldTracing . P.p2pOff)
-  , (noCliStopLocal     & P.name "plutus"                     . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (noCliStopLocal     & P.name "plutus-secp-ecdsa"          . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (noCliStopLocal     & P.name "plutus-secp-schnorr"        . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (noCliStopNomadPerf & P.name "default-nomadperf"          . P.tracerOn  . P.newTracing . P.p2pOn )
-  , (noCliStopNomadPerf & P.name "default-nomadperf-nop2p"    . P.tracerOn  . P.newTracing . P.p2pOff)
-  , (noCliStopNomadPerf & P.name "oldtracing-nomadperf"       . P.tracerOn  . P.oldTracing . P.p2pOn )
-  , (noCliStopNomadPerf & P.name "oldtracing-nomadperf-nop2p" . P.tracerOn  . P.oldTracing . P.p2pOff)
+    (noCliStopLocal     & P.name "default"                    . P.tracerOn  . P.newTracing . P.p2pOff . P.analysisUnitary  )
+  , (noCliStopLocal     & P.name "default-p2p"                . P.tracerOn  . P.newTracing . P.p2pOn  . P.analysisUnitary  )
+  , (noCliStopLocal     & P.name "oldtracing"                 . P.tracerOn  . P.oldTracing . P.p2pOff . P.analysisUnitary  )
+  , (noCliStopLocal     & P.name "plutus"                     . P.tracerOn  . P.newTracing . P.p2pOff . P.analysisSizeSmall)
+  , (noCliStopLocal     & P.name "plutus-secp-ecdsa"          . P.tracerOn  . P.newTracing . P.p2pOff . P.analysisSizeSmall)
+  , (noCliStopLocal     & P.name "plutus-secp-schnorr"        . P.tracerOn  . P.newTracing . P.p2pOff . P.analysisSizeSmall)
+  , (noCliStopNomadPerf & P.name "default-nomadperf"          . P.tracerOn  . P.newTracing . P.p2pOn  . P.analysisUnitary  )
+  , (noCliStopNomadPerf & P.name "default-nomadperf-nop2p"    . P.tracerOn  . P.newTracing . P.p2pOff . P.analysisUnitary  )
+  , (noCliStopNomadPerf & P.name "oldtracing-nomadperf"       . P.tracerOn  . P.oldTracing . P.p2pOn  . P.analysisUnitary  )
+  , (noCliStopNomadPerf & P.name "oldtracing-nomadperf-nop2p" . P.tracerOn  . P.oldTracing . P.p2pOff . P.analysisUnitary  )
   ]
   ++
   ------------------------------------------------------------------------------
@@ -361,16 +405,17 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   let model =    dummy
               & P.uniCircle . P.hosts 4
               . P.loopback
+              . P.epochLength 8000 . P.parameterK 40
               . P.fixedLoaded
               . P.shutdownOnSlot 56000
               . P.tracerOn . P.newTracing
-              . P.analysisStandard
+              . P.analysisStandard . P.analysisEpoch3Plus
   in [
-    (model & P.name "model-secp-ecdsa-double" )
-  , (model & P.name "model-secp-ecdsa-half"   )
-  , (model & P.name "model-secp-ecdsa-plain"  )
-  , (model & P.name "model-value"             )
-  , (model & P.name "model-value-test"        )
+    (model & P.name "model-secp-ecdsa-double" . P.analysisSizeModerate . P.utxo 10000000 . P.delegators 1300000)
+  , (model & P.name "model-secp-ecdsa-half"   . P.analysisSizeModerate . P.utxo 10000000 . P.delegators 1300000)
+  , (model & P.name "model-secp-ecdsa-plain"  . P.analysisSizeModerate . P.utxo 10000000 . P.delegators 1300000)
+  , (model & P.name "model-value"             . P.analysisSizeFull     . P.utxo 10000000 . P.delegators 1300000)
+  , (model & P.name "model-value-test"        . P.analysisSizeFull     . P.utxo  1000000 . P.delegators  200000)
   ]
   ++
   ------------------------------------------------------------------------------
@@ -380,20 +425,22 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                    & P.uniCircle . P.hosts 6
                    . P.loopback
                    . P.p2pOff
+                   . P.utxo 1000000 . P.delegators 200000
+                   . P.epochLength 600 . P.parameterK 3
                    . P.fixedLoaded
                    . P.shutdownOnSlot 9000
                    . P.tracerOn . P.newTracing
-                   . P.analysisStandard
+                   . P.analysisStandard . P.analysisSizeModerate . P.analysisEpoch3Plus
   in [
-    (plutusCall & P.name "plutuscall-loop-double"         )
-  , (plutusCall & P.name "plutuscall-loop-half"           )
-  , (plutusCall & P.name "plutuscall-loop-plain"          )
-  , (plutusCall & P.name "plutuscall-secp-ecdsa-double"   )
-  , (plutusCall & P.name "plutuscall-secp-ecdsa-half"     )
-  , (plutusCall & P.name "plutuscall-secp-ecdsa-plain"    )
-  , (plutusCall & P.name "plutuscall-secp-schnorr-double" )
-  , (plutusCall & P.name "plutuscall-secp-schnorr-half"   )
-  , (plutusCall & P.name "plutuscall-secp-schnorr-plain"  )
+    (plutusCall & P.name "plutuscall-loop-double"        )
+  , (plutusCall & P.name "plutuscall-loop-half"          )
+  , (plutusCall & P.name "plutuscall-loop-plain"         )
+  , (plutusCall & P.name "plutuscall-secp-ecdsa-double"  )
+  , (plutusCall & P.name "plutuscall-secp-ecdsa-half"    )
+  , (plutusCall & P.name "plutuscall-secp-ecdsa-plain"   )
+  , (plutusCall & P.name "plutuscall-secp-schnorr-double")
+  , (plutusCall & P.name "plutuscall-secp-schnorr-half"  )
+  , (plutusCall & P.name "plutuscall-secp-schnorr-plain" )
   ]
   ++
   ------------------------------------------------------------------------------
@@ -403,6 +450,8 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                   & P.torus . P.hosts 6
                   . P.loopback
                   . P.p2pOff
+                  . P.utxo 0 . P.delegators 0
+                  . P.epochLength 600 . P.parameterK 3
                   . P.fixedLoaded
                   . P.shutdownOnSlot 1200
                   . P.tracerOn . P.newTracing
@@ -418,6 +467,8 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   let cloud =   dummy
               & P.torusDense . P.hosts 52 . P.withExplorerNode
               . P.nomadPerf
+              . P.utxo 4000000 . P.delegators 1000000
+              . P.epochLength 8000 . P.parameterK 40
               . P.fixedLoaded
               . P.tracerOn
               . P.analysisStandard
@@ -425,13 +476,13 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
       plutus = cloud & P.shutdownOnSlot 72000
   in [
   -- Value
-    (value  & P.name "value-nomadperf"                   . P.newTracing . P.p2pOn )
-  , (value  & P.name "value-nomadperf-nop2p"             . P.newTracing . P.p2pOff)
-  , (value  & P.name "value-oldtracing-nomadperf"        . P.oldTracing . P.p2pOn )
-  , (value  & P.name "value-oldtracing-nomadperf-nop2p"  . P.oldTracing . P.p2pOff)
+    (value  & P.name "value-nomadperf"                   . P.newTracing . P.p2pOn  . P.analysisSizeFull  . P.analysisEpoch3Plus)
+  , (value  & P.name "value-nomadperf-nop2p"             . P.newTracing . P.p2pOff . P.analysisSizeFull  . P.analysisEpoch3Plus)
+  , (value  & P.name "value-oldtracing-nomadperf"        . P.oldTracing . P.p2pOn  . P.analysisSizeFull  . P.analysisEpoch3Plus)
+  , (value  & P.name "value-oldtracing-nomadperf-nop2p"  . P.oldTracing . P.p2pOff . P.analysisSizeFull  . P.analysisEpoch3Plus)
   -- Plutus
-  , (plutus & P.name "plutus-nomadperf"                  . P.newTracing . P.p2pOn )
-  , (plutus & P.name "plutus-nomadperf-nop2p"            . P.newTracing . P.p2pOff)
+  , (plutus & P.name "plutus-nomadperf"                  . P.newTracing . P.p2pOn  . P.analysisSizeSmall . P.analysisEpoch3Plus)
+  , (plutus & P.name "plutus-nomadperf-nop2p"            . P.newTracing . P.p2pOff . P.analysisSizeSmall . P.analysisEpoch3Plus)
   ]
   ++
   ------------------------------------------------------------------------------
@@ -440,8 +491,10 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   let chainsync =   dummy
                   & P.uniCircle . P.hostsChainsync 1 . P.withChaindbServer . P.withExplorerNode
                   . P.loopback
+                  . P.utxo 0 . P.delegators 0
+                  . P.epochLength 432000 . P.parameterK 2160
                   . P.chainsync
-                  . P.analysisStandard
+                  . P.analysisPerformance
       byron  = chainsync & P.shutdownOnSlot   237599
       alonzo = chainsync & P.shutdownOnSlot 38901589
   in [

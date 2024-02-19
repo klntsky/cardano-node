@@ -73,6 +73,24 @@ ciTestBage = Types.Profile {
     , Types.n_pool_hosts = 2
   }
   , Types.era = Types.Babbage
+  , Types.genesis = Types.Genesis {
+      Types.network_magic = 0
+    , Types.single_shot = False
+    , Types.per_pool_balance = 0
+    , Types.funds_balance = 0
+    , Types.utxo = 0
+    , Types.active_slots_coeff = 0
+    , Types.epoch_length = 0
+    , Types.parameter_k = 0
+    , Types.slot_duration = 0
+    , Types.extra_future_offset = 0
+    , Types.pparamsEpoch = 0
+    , Types.delegators = 0
+    , Types.shelley = mempty
+    , Types.alonzo = mempty
+    , Types.pool_coin = 0
+    , Types.delegator_coin = 0
+  }
   , Types.scenario = Types.FixedLoaded
   , Types.node = Types.Node {
       Types.rts_flags_override = []
@@ -133,7 +151,9 @@ profilesMap = Tasty.testGroup
       case eitherAns of
         (Left err) -> fail err
         (Right ans) -> do
-          -- Check all keys first (without this what's below makes no sense!)
+          ----------------------------------------------------------------------
+          -- Check all keys/names first (if error what's below makes no sense!)
+          ----------------------------------------------------------------------
           assertEqual
             ("Profile == (decode \"" ++ fp ++ "\") - Keys")
             (Map.keys (ans :: Map.Map String Types.Profile))
@@ -149,17 +169,9 @@ profilesMap = Tasty.testGroup
               (\p -> Types.name p)
               Profiles.profiles
             )
-{--
-          mapM_
-            (uncurry $ assertEqual
-              ("Profile == (decode \"" ++ fp ++ "\") - Composition")
-            )
-            (zip
-              (Map.assocs Profiles.profiles)
-              (Map.assocs (ans :: Map.Map String Types.Profile))
-            )
---}
+          ----------------------------------------------------------------------
           -- Show the first profile with differences in the Scenario type.
+          ----------------------------------------------------------------------
           mapM_
             (uncurry $ assertEqual
               ("Profile == (decode \"" ++ fp ++ "\") - Scenario")
@@ -174,7 +186,9 @@ profilesMap = Tasty.testGroup
                 (\p -> Types.scenario p) Profiles.profiles
               )
             )
+          ----------------------------------------------------------------------
           -- Show the first profile with differences in the Composition type.
+          ----------------------------------------------------------------------
           mapM_
             (uncurry $ assertEqual
               ("Profile == (decode \"" ++ fp ++ "\") - Composition")
@@ -189,7 +203,33 @@ profilesMap = Tasty.testGroup
                 (\p -> Types.composition p) Profiles.profiles
               )
             )
+          ----------------------------------------------------------------------
+          -- Show the first profile with differences in the Genesis type (partial).
+          ----------------------------------------------------------------------
+          mapM_
+            (uncurry $ assertEqual
+              ("Profile == (decode \"" ++ fp ++ "\") - Analysis (partial)")
+            )
+            -- Map.Map to keep the key / profile name.
+            (zip
+              (Map.assocs $ Map.map
+                (\p ->
+                  let g = Types.genesis p
+                  in (Types.utxo g, Types.delegators g, Types.epoch_length g, Types.parameter_k g)
+                )
+                (ans :: Map.Map String Types.Profile)
+              )
+              (Map.assocs $ Map.map
+                (\p ->
+                  let g = Types.genesis p
+                  in (Types.utxo g, Types.delegators g, Types.epoch_length g, Types.parameter_k g)
+                )
+                Profiles.profiles
+              )
+            )
+          ----------------------------------------------------------------------
           -- Show the first profile with differences in the Node type.
+          ----------------------------------------------------------------------
           mapM_
             (uncurry $ assertEqual
               ("Profile == (decode \"" ++ fp ++ "\") - Node")
@@ -204,7 +244,9 @@ profilesMap = Tasty.testGroup
                 (\p -> Types.node p) Profiles.profiles
               )
             )
+          ----------------------------------------------------------------------
           -- Show the first profile with differences in the Tracer type.
+          ----------------------------------------------------------------------
           mapM_
             (uncurry $ assertEqual
               ("Profile == (decode \"" ++ fp ++ "\") - Tracer")
@@ -217,6 +259,30 @@ profilesMap = Tasty.testGroup
               )
               (Map.assocs $ Map.map
                 (\p -> Types.tracer p) Profiles.profiles
+              )
+            )
+          ----------------------------------------------------------------------
+          -- Show the first profile with differences in the Analysis type (partial).
+          ----------------------------------------------------------------------
+          mapM_
+            (uncurry $ assertEqual
+              ("Profile == (decode \"" ++ fp ++ "\") - Analysis (partial)")
+            )
+            -- Map.Map to keep the key / profile name.
+            (zip
+              (Map.assocs $ Map.map
+                (\p ->
+                  let a = Types.analysis p
+                  in (Types.analysisType a, Types.filters a)
+                )
+                (ans :: Map.Map String Types.Profile)
+              )
+              (Map.assocs $ Map.map
+                (\p ->
+                  let a = Types.analysis p
+                  in (Types.analysisType a, Types.filters a)
+                )
+                Profiles.profiles
               )
             )
   ]

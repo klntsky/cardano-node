@@ -20,6 +20,7 @@ module Cardano.Benchmarking.Profile.Types (
 
 import           Prelude
 import           GHC.Generics
+
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
 import qualified Data.Scientific as Scientific
@@ -34,7 +35,7 @@ data Profile = Profile
   , desc :: Maybe String
   , composition :: Composition
   , era :: Era
---  , genesis :: Maybe Genesis
+  , genesis :: Genesis
   , scenario :: Scenario
   , node :: Node
   , tracer :: Tracer
@@ -189,7 +190,7 @@ data Genesis = Genesis
   , active_slots_coeff :: Scientific.Scientific
   , epoch_length :: Int
   , parameter_k :: Int
-  , slot_duration :: Int
+  , slot_duration :: Scientific.Scientific
   , extra_future_offset :: Int
   , pparamsEpoch :: Int
   , delegators :: Int
