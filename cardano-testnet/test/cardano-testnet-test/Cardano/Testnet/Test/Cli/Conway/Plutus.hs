@@ -48,7 +48,6 @@ import           Testnet.Process.Run
 import qualified Testnet.Property.Utils as H
 import           Testnet.Runtime
 
-
 -- | Test all possible Plutus script purposes
 -- Currently tested:
 -- Spending YES
@@ -103,6 +102,7 @@ hprop_plutus_v3 = H.integrationWorkspace "all-plutus-script-purposes" $ \tempAbs
 
   plutusSpendingScript <- H.note "/home/jordan/Repos/Work/intersect-mbo/cardano-node/cardano-testnet/test/cardano-testnet-test/files/plutus/v3/always-succeeds.plutus"
   plutusMintingScript <- H.note "/home/jordan/Repos/Work/intersect-mbo/cardano-node/cardano-testnet/test/cardano-testnet-test/files/plutus/v3/minting-script.plutus"
+  proposingScript <- H.note "/home/jordan/Repos/Work/intersect-mbo/cardano-node/cardano-testnet/test/cardano-testnet-test/files/plutus/v3/proposing-script.plutus"
   datumFile <- H.note "/home/jordan/Repos/Work/intersect-mbo/cardano-node/cardano-testnet/test/cardano-testnet-test/files/plutus/v3/42.datum"
   let sendAdaToScriptAddressTxBody = work </> "send-ada-to-script-address-tx-body"
 
@@ -138,6 +138,36 @@ hprop_plutus_v3 = H.integrationWorkspace "all-plutus-script-purposes" $ \tempAbs
     0
     scriptStakeRegistrationCertificate
 
+  -- Create constitution
+  consitutionFile <- H.note $ work </> "sample-constitution"
+  pparamsUpdateFp <- H.note $ work </> "protocol-parameters-upate.action"
+  proposalAnchorFile <- H.note $ work </> "sample-proposal-anchor"
+
+  H.writeFile proposalAnchorFile "dummy anchor data"
+  H.writeFile consitutionFile "dummy constitution data"
+
+  proposalAnchorDataHash <- H.execCli' execConfig
+    [ convertToEraString anyEra, "governance"
+    , "hash", "anchor-data", "--file-text", proposalAnchorFile
+    ]
+
+  constitutionScriptHash <- filter (/= '\n') <$>
+    H.execCli' execConfig
+      [ convertToEraString anyEra, "transaction"
+      , "policyid"
+      , "--script-file", proposingScript
+      ]
+  void $ H.execCli' execConfig
+    [ convertToEraString anyEra, "governance", "action", "create-protocol-parameters-update"
+    , "--testnet"
+    , "--governance-action-deposit", show @Int 0 -- TODO: Get this from the node
+    , "--deposit-return-stake-script-file", proposingScript
+    , "--anchor-url", "https://tinyurl.com/3wrwb2as"
+    , "--anchor-data-hash", proposalAnchorDataHash
+    , "--constitution-script-hash", constitutionScriptHash
+    , "--out-file", pparamsUpdateFp
+    ]
+
   -- 1. Put UTxO and datum at Plutus spending script address
   --    Register script stake address
   void $ execCli' execConfig
@@ -162,7 +192,7 @@ hprop_plutus_v3 = H.integrationWorkspace "all-plutus-script-purposes" $ \tempAbs
     , "--tx-file", sendAdaToScriptAddressTx
     ]
 
-  H.threadDelay 5_000_000
+  H.threadDelay 10_000_000
   -- 2. Successfully spend conway spending script
   void $ H.execCli' execConfig
     [ convertToEraString anyEra, "query", "utxo"
@@ -197,6 +227,8 @@ hprop_plutus_v3 = H.integrationWorkspace "all-plutus-script-purposes" $ \tempAbs
                       , "+", mintValue
                       ]
 
+  -- We reuse the datum file for all the redeemers since these
+  -- scripts always succeed
   void $ execCli' execConfig
     [ convertToEraString anyEra, "transaction", "build"
     , "--change-address", Text.unpack $ paymentKeyInfoAddr $ wallets !! 1
@@ -204,13 +236,17 @@ hprop_plutus_v3 = H.integrationWorkspace "all-plutus-script-purposes" $ \tempAbs
     , "--tx-in", Text.unpack $ renderTxIn plutusScriptTxIn
     , "--tx-in-script-file", plutusSpendingScript
     , "--tx-in-datum-file", datumFile
-    , "--tx-in-redeemer-file", datumFile -- We just reuse the datum file for the redeemer
+    , "--tx-in-redeemer-file", datumFile
     , "--mint", mintValue
     , "--mint-script-file", plutusMintingScript
-    , "--mint-redeemer-file", datumFile -- We just reuse the datum file for the redeemer
+    , "--mint-redeemer-file", datumFile
     , "--certificate-file", scriptStakeRegistrationCertificate
     , "--certificate-script-file", plutusSpendingScript
     , "--certificate-redeemer-file", datumFile
+    -- TODO: You need to update the api to enable to propose
+    , "--proposal-file", pparamsUpdateFp
+    , "--proposal-script-file", proposingScript
+    , "--proposal-redeemer-file", datumFile
     , "--tx-out", txout
     , "--out-file", spendScriptUTxOTxBody
     ]
