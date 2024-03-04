@@ -29,6 +29,28 @@ def profile_cli_args($p):
 | .common * (.[$p.era] // {})
 ;
 
+## CLI args for calling create-testnet-data
+def profile_cli_args_ctd($p):
+{ common:
+  { createStackedArgs:
+    ([ "--total-supply",           fmt_decimal_10_5($p.genesis.funds_balance + $p.derived.supply_delegated)
+     , "--utxo-keys",              1
+     , "--genesis-keys",           $p.composition.n_bft_hosts
+     , "--delegated-supply",       fmt_decimal_10_5($p.derived.supply_delegated)
+     , "--pools",                  $p.composition.n_pools
+     , "--stake-delegators",       $p.derived.delegators_effective
+     , "--stuffed-utxo",           fmt_decimal_10_5($p.derived.utxo_stuffed)
+     , "--testnet-magic",          $p.genesis.network_magic
+     ])
+  , pools:
+    [ "--argjson"
+    , "initialPoolCoin",           fmt_decimal_10_5($p.genesis.pool_coin)
+    ]
+  }
+}
+| .common * (.[$p.era] // {})
+;
+
 ## Remove parts of profile that don't invalidate
 ## the cryptographic material in genesis.  Note the opportunistic approach.
 ##

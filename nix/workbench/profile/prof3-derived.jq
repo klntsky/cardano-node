@@ -225,6 +225,7 @@ def add_derived_params:
                 | . + profile_name_era_suffix($era)
                 )
     , cli_args: profile_cli_args(.)
+    , cli_args_ctd: profile_cli_args_ctd(.)
     }
 ;
 

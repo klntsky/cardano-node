@@ -218,14 +218,31 @@ case "$op" in
         | from_entries
         ' "$node_specs" > "$dir"/pool-relays.json
 
+        # TODO if profile_json.composition.dense_pool_density != 1 -> create-testnet-data does not support dense pools
+        local ctd_dir="./dbg_genesis_ctd"
+        rm -rf $ctd_dir
+        read -r -a ctd_args <<< "$(jq --raw-output '.cli_args_ctd.createStackedArgs | join(" ")' "$profile_json")"
+        create_testnet_data_args=(
+            --spec-shelley "$dir/genesis.spec.json"
+            --out-dir "$ctd_dir"
+            "${ctd_args[@]}"
+        )
+        progress "genesis" "$(colorise cardano-cli shelley create-testnet-data "${create_testnet_data_args[@]}")"
+        cardano-cli shelley genesis create-testnet-data "${create_testnet_data_args[@]}"
+
         read -r -a args <<< "$(jq --raw-output '.cli_args.createStackedArgs | join(" ")' "$profile_json")"
         create_staked_args=(
             --genesis-dir "$dir"
             --relay-specification-file "$dir/pool-relays.json"
             "${args[@]}"
         )
-        verbose "genesis" "$(colorise cardano-cli genesis create-staked "${create_staked_args[@]}")"
+        # verbose "genesis" "$(colorise cardano-cli genesis create-staked "${create_staked_args[@]}")"
+        progress "genesis" "$(colorise cardano-cli genesis create-staked "${create_staked_args[@]}")"
         cardano-cli genesis create-staked "${create_staked_args[@]}"
+
+        progress "debug" "copying output to ./dbg_genesis_cs before post-proc"
+        cp -a "$dir" ./dbg_genesis_cs
+
         mv "$dir"/genesis.json "$dir"/genesis-shelley.json
         mv "$dir"/genesis.spec.json "$dir"/genesis-shelley.spec.json
 
