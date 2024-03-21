@@ -12,7 +12,7 @@ module Cardano.Benchmarking.Profile (
   -- Composition topology.
   , uniCircle, torus, torusDense
   -- Composition location.
-  , loopback, nomadPerf, nomadSsd
+  , loopback, regions
   -- Composition size.
   , hosts, pools, hostsChainsync, withExplorerNode
   , withChaindbServer
@@ -81,20 +81,9 @@ loopback = comp (\c -> c {
   Types.locations = [Types.Loopback]
 })
 
-nomadPerf :: Types.Profile -> Types.Profile
-nomadPerf = comp (\c -> c {
-  Types.locations = [
-    Types.AWS Types.EU_CENTRAL_1
-  , Types.AWS Types.US_EAST_1
-  , Types.AWS Types.AP_SOUTHEAST_2
-  ]
-})
-
-nomadSsd :: Types.Profile -> Types.Profile
-nomadSsd = comp (\c -> c {
-  Types.locations = [
-    Types.AWS Types.EU_CENTRAL_1
-  ]
+regions :: [Types.Location] -> Types.Profile -> Types.Profile
+regions locs = comp (\c -> c {
+  Types.locations = locs
 })
 
 hosts :: Int -> Types.Profile -> Types.Profile

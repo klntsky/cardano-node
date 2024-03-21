@@ -130,6 +130,20 @@ dummy = Types.Profile {
 --  , Types.overlay = mempty
 }
 
+nomadPerf :: Types.Profile -> Types.Profile
+nomadPerf = P.regions
+  [
+    Types.AWS Types.EU_CENTRAL_1
+  , Types.AWS Types.US_EAST_1
+  , Types.AWS Types.AP_SOUTHEAST_2
+  ]
+
+nomadSsd :: Types.Profile -> Types.Profile
+nomadSsd = P.regions
+  [
+    Types.AWS Types.EU_CENTRAL_1
+  ]
+
 -- TODO: forge-stress and forge-stress-light have the same .node.shutdown_on_slot_synced
 -- Adding a P.nameSuffix was abandoned to keep the code `grep` friendly!
 profilesNoEra :: Map.Map String Types.Profile
@@ -146,8 +160,8 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
              . P.shutdownOnBlock 1
              . P.analysisStandard
       fastLocal = fast & P.uniCircle  . P.hosts 2  . P.loopback
-      fastPerf  = fast & P.torusDense . P.hosts 52 . P.nomadPerf . P.withExplorerNode
-      fastSsd   = fast & P.uniCircle  . P.hosts 1  . P.nomadSsd
+      fastPerf  = fast & P.torusDense . P.hosts 52 . nomadPerf  . P.withExplorerNode
+      fastSsd   = fast & P.uniCircle  . P.hosts 1  . nomadSsd
   in [
     (fastLocal & P.name "fast"                  . P.tracerOn  . P.newTracing                                )
   , (fastLocal & P.name "fast-plutus"           . P.tracerOn  . P.newTracing           . P.analysisSizeSmall)
@@ -171,7 +185,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                . P.analysisStandard
       -- TODO: Why are not both using UniCircle ????
       ciTestLocal     = ciTest & P.uniCircle . P.loopback
-      ciTestNomadPerf = ciTest & P.torus     . P.nomadPerf . P.withExplorerNode
+      ciTestNomadPerf = ciTest & P.torus     . nomadPerf  . P.withExplorerNode
   in [
   -- Local
     (ciTestLocal     & P.name "ci-test"                      . P.tracerOn  . P.newTracing . P.p2pOff                  )
@@ -232,8 +246,8 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
       ciBench10  = ciBench & P.hosts 10 . P.utxo 500000 . P.delegators 100000
       -- TODO: Why are not all using UniCircle ????
       ciBench02Local     = ciBench02 & P.uniCircle . P.loopback
-      ciBench02NomadPerf = ciBench02 & P.torus     . P.nomadPerf . P.withExplorerNode
-      ciBench06Trace     = ciBench06 & P.torus     . P.loopback  . P.tracerWithresources
+      ciBench02NomadPerf = ciBench02 & P.torus     . nomadPerf  . P.withExplorerNode
+      ciBench06Trace     = ciBench06 & P.torus     . P.loopback . P.tracerWithresources
       ciBench10Local     = ciBench10 & P.uniCircle . P.loopback
   in [
   -- 2 nodes, local
@@ -395,7 +409,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                   . P.analysisStandard
       -- TODO: Why are not all using Torus ????
       noCliStopLocal     = noCliStop & P.uniCircle . P.loopback
-      noCliStopNomadPerf = noCliStop & P.torus     . P.nomadPerf . P.withExplorerNode
+      noCliStopNomadPerf = noCliStop & P.torus     . nomadPerf  . P.withExplorerNode
   in [
     (noCliStopLocal     & P.name "default"                    . P.tracerOn  . P.newTracing . P.p2pOff . P.analysisUnitary  )
   , (noCliStopLocal     & P.name "default-p2p"                . P.tracerOn  . P.newTracing . P.p2pOn  . P.analysisUnitary  )
@@ -476,7 +490,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   let cloud =   dummy
               & P.torusDense . P.hosts 52 . P.withExplorerNode
-              . P.nomadPerf
+              . nomadPerf
               . P.utxo 4000000 . P.delegators 1000000
               . P.epochLength 8000 . P.parameterK 40
               . P.fixedLoaded
@@ -500,7 +514,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   let latency =   dummy
                 & P.torusDense . P.hosts 52 . P.withExplorerNode
-                . P.nomadPerf
+                . nomadPerf
                 . P.utxo 0 . P.delegators 0
                 . P.epochLength 600 . P.parameterK 3
                 . P.latency . P.generatorTps 15
