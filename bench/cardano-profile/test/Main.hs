@@ -119,6 +119,28 @@ ciTestBage = Types.Profile {
       })
     , Types.tx_count = 9000
   }
+  , Types.cluster = Types.Cluster {
+      Types.nomad = Types.Nomad {
+        Types.namespace = "default"
+      , Types.nomad_class = ""
+      , Types.resources = Types.ByNodeType {
+          Types.producer = Types.Resources 2 15000 16000
+        , Types.explorer = Just $ Types.Resources 2 15000 16000
+        }
+      , Types.fetch_logs_ssh = False
+      }
+    , Types.aws = Types.ClusterAWS {
+        Types.instance_type = Types.ByNodeType {
+          Types.producer = "c5.2xlarge"
+        , Types.explorer = Just "m5.4xlarge"
+        }
+      }
+    , Types.minimun_storage = Just $ Types.ByNodeType {
+        Types.producer = 12582912
+      , Types.explorer = Just 14155776
+      }
+    , Types.keep_running = False
+  }
   , Types.analysis = Types.Analysis {
       Types.analysisType = Just "standard"
     , Types.cluster_base_startup_overhead_s = 40
@@ -262,6 +284,23 @@ profilesMap = Tasty.testGroup
               )
               (Map.assocs $ Map.map
                 (\p -> Types.tracer p) Profiles.profiles
+              )
+            )
+          ----------------------------------------------------------------------
+          -- Show the first profile with differences in the Tracer type.
+          ----------------------------------------------------------------------
+          mapM_
+            (uncurry $ assertEqual
+              ("Profile == (decode \"" ++ fp ++ "\") - Cluster")
+            )
+            -- Map.Map to keep the key / profile name.
+            (zip
+              (Map.assocs $ Map.map
+                (\p -> Types.cluster p)
+                (ans :: Map.Map String Types.Profile)
+              )
+              (Map.assocs $ Map.map
+                (\p -> Types.cluster p) Profiles.profiles
               )
             )
           ----------------------------------------------------------------------

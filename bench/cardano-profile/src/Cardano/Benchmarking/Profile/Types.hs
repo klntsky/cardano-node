@@ -13,6 +13,7 @@ module Cardano.Benchmarking.Profile.Types (
 , Node (..), NodeVerbatim (..)
 , Tracer (..)
 , Generator (..), Plutus (..)
+, Cluster (..), Nomad (..), ClusterAWS (..), ByNodeType (..), Resources (..)
 , Analysis (..), AnalysisFilterExpression (..), AnalysisFilterExpressionContent (..)
 ) where
 
@@ -40,6 +41,7 @@ data Profile = Profile
   , node :: Node
   , tracer :: Tracer
   , generator :: Generator
+  , cluster :: Cluster
   , analysis :: Analysis
   -- TODO
 --  , cli_args :: Aeson.Object
@@ -332,6 +334,77 @@ instance Aeson.FromJSON Plutus where
       Plutus
         <$> o Aeson..:? "type"
         <*> o Aeson..:? "script"
+
+--------------------------------------------------------------------------------
+
+-- | The cluster properties (if used).
+data Cluster = Cluster
+  { nomad :: Nomad
+  , aws :: ClusterAWS
+  , minimun_storage :: Maybe (ByNodeType Int)
+  , keep_running :: Bool
+  }
+  deriving (Eq, Show, Generic)
+
+instance Aeson.ToJSON Cluster
+
+instance Aeson.FromJSON Cluster
+
+data Nomad = Nomad
+  { namespace :: String
+  , nomad_class :: String
+  , resources :: ByNodeType Resources
+  , fetch_logs_ssh :: Bool
+  }
+  deriving (Eq, Show, Generic)
+
+instance Aeson.ToJSON Nomad where
+  toJSON p@(Nomad _ _ _ _) =
+    Aeson.object
+      [ "namespace"      Aeson..= namespace p
+      , "class"          Aeson..= nomad_class p
+      , "resources"      Aeson..= resources p
+      , "fetch_logs_ssh" Aeson..= fetch_logs_ssh p
+      ]
+
+instance Aeson.FromJSON Nomad where
+  parseJSON =
+    Aeson.withObject "Nomad" $ \o -> do
+      Nomad
+        <$> o Aeson..: "namespace"
+        <*> o Aeson..: "class"
+        <*> o Aeson..: "resources"
+        <*> o Aeson..: "fetch_logs_ssh"
+
+data ClusterAWS = ClusterAWS
+  { instance_type :: ByNodeType String
+  }
+  deriving (Eq, Show, Generic)
+
+instance Aeson.ToJSON ClusterAWS
+
+instance Aeson.FromJSON ClusterAWS
+
+data ByNodeType a = ByNodeType
+  { producer :: a
+  , explorer :: Maybe a
+  }
+  deriving (Eq, Show, Generic)
+
+instance Aeson.ToJSON a => Aeson.ToJSON (ByNodeType a)
+
+instance Aeson.FromJSON a => Aeson.FromJSON (ByNodeType a)
+
+data Resources = Resources
+  { cores :: Int
+  , memory :: Int
+  , memory_max :: Int
+  }
+  deriving (Eq, Show, Generic)
+
+instance Aeson.ToJSON Resources
+
+instance Aeson.FromJSON Resources
 
 --------------------------------------------------------------------------------
 

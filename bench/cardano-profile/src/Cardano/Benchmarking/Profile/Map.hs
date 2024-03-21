@@ -15,7 +15,6 @@ import           Prelude
 import           Data.Function ((&))
 
 import qualified Data.Map.Strict as Map
-import qualified Data.Scientific as Scientific
 
 import qualified Cardano.Benchmarking.Profile as P
 import qualified Cardano.Benchmarking.Profile.Types as Types
@@ -47,102 +46,69 @@ profiles = foldMap
   )
   profilesNoEra
 
--- The defaults
+-- Aux functions
 --------------------------------------------------------------------------------
 
-dummy :: Types.Profile
-dummy = Types.Profile {
-    Types.name = ""
-  , Types.desc = Nothing
-  , Types.composition = Types.Composition {
-      Types.locations = []
-    , Types.n_bft_hosts = 0
-    , Types.n_singular_hosts = 0
-    , Types.n_dense_hosts = 0
-    , Types.dense_pool_density = 0
-    , Types.with_proxy = False
-    , Types.with_explorer = False
-    , Types.topology = Types.Line
-    , Types.with_chaindb_server = Nothing
-    , Types.n_hosts = 0
-    , Types.n_pools = 0
-    , Types.n_singular_pools = 0
-    , Types.n_dense_pools = 0
-    , Types.n_pool_hosts = 0
-  }
-  , Types.era = Types.Allegra
-  , Types.genesis = Types.Genesis {
-      Types.network_magic = 0
-    , Types.single_shot = False
-    , Types.per_pool_balance = 0
-    , Types.funds_balance = 0
-    , Types.utxo = 0
-    , Types.active_slots_coeff = 0
-    , Types.epoch_length = 0
-    , Types.parameter_k = 0
-    , Types.slot_duration = 0
-    , Types.extra_future_offset = 0
-    , Types.pparamsEpoch = 0
-    , Types.delegators = 0
-    , Types.shelley = mempty
-    , Types.alonzo = mempty
-    , Types.pool_coin = 0
-    , Types.delegator_coin = 0
-  }
-  , Types.scenario = Types.Idle
-  , Types.node = Types.Node {
-      Types.rts_flags_override = []
-    , Types.shutdown_on_slot_synced = Nothing
-    , Types.shutdown_on_block_synced = Nothing
-    , Types.tracing_backend = ""
-    , Types.nodeTracer = False
-    , Types.verbatim = Types.NodeVerbatim Nothing
-  }
-  , Types.tracer = Types.Tracer {
-      Types.rtview = False
-    , Types.ekg = False
-    , Types.withresources = False
-  }
-  , Types.generator = Types.Generator {
-      Types.add_tx_size = 0
-    , Types.init_cooldown = 0
-    , Types.inputs_per_tx = 0
-    , Types.outputs_per_tx = 0
-    , Types.tx_fee = 0
-    , Types.epochs = 0
-    , Types.tps = 0
-    , Types.plutus = Nothing
-    , Types.tx_count = 0
-  }
-  , Types.analysis = Types.Analysis {
-      Types.analysisType = Nothing
-    , Types.cluster_base_startup_overhead_s = 0
-    , Types.start_log_spread_s = 0
-    , Types.last_log_spread_s = 0
-    , Types.silence_since_last_block_s = 0
-    , Types.tx_loss_ratio = Scientific.fromFloatDigits (0 :: Double)
-    , Types.finish_patience = 0
-    , Types.filters = []
-    , Types.filter_exprs = []
-    , Types.minimum_chain_density = Scientific.fromFloatDigits (0 :: Double)
-    , Types.cluster_startup_overhead_s = 0
-  }
---  , Types.overlay = mempty
-}
-
 nomadPerf :: Types.Profile -> Types.Profile
-nomadPerf = P.regions
-  [
-    Types.AWS Types.EU_CENTRAL_1
-  , Types.AWS Types.US_EAST_1
-  , Types.AWS Types.AP_SOUTHEAST_2
-  ]
+nomadPerf =
+  P.regions
+    [
+      Types.AWS Types.EU_CENTRAL_1
+    , Types.AWS Types.US_EAST_1
+    , Types.AWS Types.AP_SOUTHEAST_2
+    ]
+  .
+  P.nomadNamespace "perf"
+  .
+  P.nomadClass "perf"
+  .
+  P.nomadResources (Types.ByNodeType {
+    Types.producer = Types.Resources 8 15400 16000
+  , Types.explorer = Just $ Types.Resources 16 32000 64000
+  })
+  .
+  P.nomadSSHLogsOn
+  .
+  P.clusterKeepRunningOn
+  .
+  P.awsInstanceTypes (Types.ByNodeType {
+    Types.producer = "c5.2xlarge"
+  , Types.explorer = Just "m5.4xlarge"
+  })
+  .
+  P.clusterMinimunStorage (Just $ Types.ByNodeType {
+    Types.producer = 12582912
+  , Types.explorer = Just 14155776
+  })
 
 nomadSsd :: Types.Profile -> Types.Profile
-nomadSsd = P.regions
-  [
-    Types.AWS Types.EU_CENTRAL_1
-  ]
+nomadSsd =
+  P.regions
+    [
+      Types.AWS Types.EU_CENTRAL_1
+    ]
+  .
+  P.nomadNamespace "perf-ssd"
+  .
+  P.nomadClass "perf-ssd"
+  .
+  P.nomadResources (Types.ByNodeType {
+    Types.producer = Types.Resources 32 64000 64000
+  , Types.explorer = Just $ Types.Resources 32 64000 64000
+  })
+  .
+  P.nomadSSHLogsOn
+  .
+  P.clusterKeepRunningOn
+  .
+  P.awsInstanceTypes (Types.ByNodeType {
+    Types.producer = "c5.9xlarge"
+  , Types.explorer = Nothing
+  })
+  .
+  P.clusterMinimunStorage Nothing
+
+--------------------------------------------------------------------------------
 
 -- TODO: forge-stress and forge-stress-light have the same .node.shutdown_on_slot_synced
 -- Adding a P.nameSuffix was abandoned to keep the code `grep` friendly!
@@ -153,7 +119,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- fast: 2 nodes, FixedLoaded and "--shutdown-on-block-synced 1"
   ------------------------------------------------------------------------------
-  let fast =   dummy
+  let fast =   P.defaults
              & P.utxo 0 . P.delegators 0
              . P.epochLength 600 . P.parameterK 3
              . P.fixedLoaded . P.generatorTps 15
@@ -176,7 +142,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- ci-test: 2 nodes, FixedLoaded and "--shutdown-on-block-synced 3"
   ------------------------------------------------------------------------------
-  let ciTest =   dummy
+  let ciTest =   P.defaults
                & P.hosts 2
                . P.utxo 0 . P.delegators 0
                . P.epochLength 600 . P.parameterK 3
@@ -203,7 +169,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- ci-test-dense: 10 pools, FixedLoaded and "--shutdown-on-block-synced 3"
   ------------------------------------------------------------------------------
-  let ciTestDense =   dummy
+  let ciTestDense =   P.defaults
                     & P.uniCircle . P.pools 10
                     . P.loopback
                     . P.p2pOff
@@ -220,7 +186,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- epoch transition: 2 nodes, FixedLoaded and "--shutdown-on-slot-synced 900"
   ------------------------------------------------------------------------------
-  let epochTransition =   dummy
+  let epochTransition =   P.defaults
                         & P.uniCircle . P.hosts 2
                         . P.loopback
                         . P.utxo 0 . P.delegators 0
@@ -236,7 +202,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- ci-bench: 2|5|10 nodes, FixedLoaded and "--shutdown-on-block-synced 15"
   ------------------------------------------------------------------------------
-  let ciBench =  dummy
+  let ciBench =  P.defaults
                & P.fixedLoaded . P.generatorTps 15
                . P.epochLength 600 . P.parameterK 3
                . P.shutdownOnBlock 15
@@ -278,7 +244,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- forge-stress
   ------------------------------------------------------------------------------
-  let forgeStress =   dummy
+  let forgeStress =   P.defaults
                     & P.uniCircle
                     . P.loopback
                     . P.p2pOff
@@ -327,7 +293,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- TODO: This is a special case of forge-stress. Mix both? Still used?
   ------------------------------------------------------------------------------
-  let dish =   dummy
+  let dish =   P.defaults
              & P.uniCircle . P.hosts 3
              . P.loopback
              . P.p2pOff
@@ -348,7 +314,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- k3: 3 nodes and no "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
   ------------------------------------------------------------------------------
-  let k3 =   dummy
+  let k3 =   P.defaults
            & P.uniCircle . P.hosts 3
            . P.loopback
            . P.p2pOff
@@ -368,7 +334,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- 6 nodes and no "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
   ------------------------------------------------------------------------------
-  let idle =   dummy
+  let idle =   P.defaults
              & P.uniCircle . P.hosts 6
              . P.loopback
              . P.p2pOff
@@ -384,7 +350,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- 6 nodes and no "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
   ------------------------------------------------------------------------------
-  let tracerOnly =   dummy
+  let tracerOnly =   P.defaults
                    & P.uniCircle . P.hosts 6
                    . P.loopback
                    . P.p2pOff
@@ -400,7 +366,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- 6 nodes and no "--shutdown-on-slot-synced" and no "--shutdown-on-block-synced"
   ------------------------------------------------------------------------------
-  let noCliStop =   dummy
+  let noCliStop =   P.defaults
                   & P.hosts 6
                   . P.fixedLoaded
                   . P.utxo 0 . P.delegators 6
@@ -426,7 +392,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- model: 4 nodes, FixedLoaded and "--shutdown-on-slot-synced 56000"
   ------------------------------------------------------------------------------
-  let model =    dummy
+  let model =    P.defaults
               & P.uniCircle . P.hosts 4
               . P.loopback
               . P.epochLength 8000 . P.parameterK 40
@@ -445,7 +411,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- plutuscall: 6 nodes, FixedLoaded and "--shutdown-on-slot-synced 9000"
   ------------------------------------------------------------------------------
-  let plutusCall =   dummy
+  let plutusCall =   P.defaults
                    & P.uniCircle . P.hosts 6
                    . P.loopback
                    . P.p2pOff
@@ -470,7 +436,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- plutuscall: 6 nodes, FixedLoaded and "--shutdown-on-slot-synced 1200"
   ------------------------------------------------------------------------------
-  let traceFull =   dummy
+  let traceFull =   P.defaults
                   & P.torus . P.hosts 6
                   . P.loopback
                   . P.p2pOff
@@ -488,7 +454,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- cloud: (52 + 1) nodes, FixedLoaded and "--shutdown-on-slot-synced 56000"
   ------------------------------------------------------------------------------
-  let cloud =   dummy
+  let cloud =   P.defaults
               & P.torusDense . P.hosts 52 . P.withExplorerNode
               . nomadPerf
               . P.utxo 4000000 . P.delegators 1000000
@@ -512,7 +478,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- 
   ------------------------------------------------------------------------------
-  let latency =   dummy
+  let latency =   P.defaults
                 & P.torusDense . P.hosts 52 . P.withExplorerNode
                 . nomadPerf
                 . P.utxo 0 . P.delegators 0
@@ -527,7 +493,7 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   ------------------------------------------------------------------------------
   -- chainsync
   ------------------------------------------------------------------------------
-  let chainsync =   dummy
+  let chainsync =   P.defaults
                   & P.uniCircle . P.hostsChainsync 1 . P.withChaindbServer . P.withExplorerNode
                   . P.loopback
                   . P.utxo 0 . P.delegators 0

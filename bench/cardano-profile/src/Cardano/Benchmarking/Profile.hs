@@ -6,6 +6,9 @@
 
 module Cardano.Benchmarking.Profile (
     Types.Profile (Profile)
+
+  , defaults
+
   -- Name and description.
   , name, desc
 
@@ -40,6 +43,11 @@ module Cardano.Benchmarking.Profile (
   -- Generator params.
   , generatorTps
 
+  -- Cluster params.
+  , clusterMinimunStorage, clusterKeepRunningOn
+  , nomadNamespace, nomadClass, nomadResources, nomadSSHLogsOn
+  , awsInstanceTypes
+
   -- Analysis params.
   , analysisOff, analysisStandard, analysisPerformance
   , analysisSizeSmall, analysisSizeModerate, analysisSizeFull
@@ -53,6 +61,110 @@ import           Prelude hiding (id)
 import qualified Data.Scientific as Scientific
 
 import qualified Cardano.Benchmarking.Profile.Types as Types
+
+--------------------------------------------------------------------------------
+
+defaults :: Types.Profile
+defaults = Types.Profile {
+    Types.name = ""
+  , Types.desc = Nothing
+  , Types.composition = Types.Composition {
+      Types.locations = []
+    , Types.n_bft_hosts = 0
+    , Types.n_singular_hosts = 0
+    , Types.n_dense_hosts = 0
+    , Types.dense_pool_density = 0
+    , Types.with_proxy = False
+    , Types.with_explorer = False
+    , Types.topology = Types.Line
+    , Types.with_chaindb_server = Nothing
+    , Types.n_hosts = 0
+    , Types.n_pools = 0
+    , Types.n_singular_pools = 0
+    , Types.n_dense_pools = 0
+    , Types.n_pool_hosts = 0
+  }
+  , Types.era = Types.Allegra
+  , Types.genesis = Types.Genesis {
+      Types.network_magic = 0
+    , Types.single_shot = False
+    , Types.per_pool_balance = 0
+    , Types.funds_balance = 0
+    , Types.utxo = 0
+    , Types.active_slots_coeff = 0
+    , Types.epoch_length = 0
+    , Types.parameter_k = 0
+    , Types.slot_duration = 0
+    , Types.extra_future_offset = 0
+    , Types.pparamsEpoch = 0
+    , Types.delegators = 0
+    , Types.shelley = mempty
+    , Types.alonzo = mempty
+    , Types.pool_coin = 0
+    , Types.delegator_coin = 0
+  }
+  , Types.scenario = Types.Idle
+  , Types.node = Types.Node {
+      Types.rts_flags_override = []
+    , Types.shutdown_on_slot_synced = Nothing
+    , Types.shutdown_on_block_synced = Nothing
+    , Types.tracing_backend = ""
+    , Types.nodeTracer = False
+    , Types.verbatim = Types.NodeVerbatim Nothing
+  }
+  , Types.tracer = Types.Tracer {
+      Types.rtview = False
+    , Types.ekg = False
+    , Types.withresources = False
+  }
+  , Types.generator = Types.Generator {
+      Types.add_tx_size = 0
+    , Types.init_cooldown = 0
+    , Types.inputs_per_tx = 0
+    , Types.outputs_per_tx = 0
+    , Types.tx_fee = 0
+    , Types.epochs = 0
+    , Types.tps = 0
+    , Types.plutus = Nothing
+    , Types.tx_count = 0
+  }
+  , Types.cluster = Types.Cluster {
+      Types.nomad = Types.Nomad {
+        Types.namespace = "default"
+      , Types.nomad_class = ""
+      , Types.resources = Types.ByNodeType {
+          Types.producer = Types.Resources 2 15000 16000
+        , Types.explorer = Just $ Types.Resources 2 15000 16000
+        }
+      , Types.fetch_logs_ssh = False
+      }
+    , Types.aws = Types.ClusterAWS {
+        Types.instance_type = Types.ByNodeType {
+          Types.producer = "c5.2xlarge"
+        , Types.explorer = Just "m5.4xlarge"
+        }
+      }
+    , Types.minimun_storage = Just $ Types.ByNodeType {
+        Types.producer = 12582912
+      , Types.explorer = Just 14155776
+      }
+    , Types.keep_running = False
+  }
+  , Types.analysis = Types.Analysis {
+      Types.analysisType = Nothing
+    , Types.cluster_base_startup_overhead_s = 0
+    , Types.start_log_spread_s = 0
+    , Types.last_log_spread_s = 0
+    , Types.silence_since_last_block_s = 0
+    , Types.tx_loss_ratio = Scientific.fromFloatDigits (0 :: Double)
+    , Types.finish_patience = 0
+    , Types.filters = []
+    , Types.filter_exprs = []
+    , Types.minimum_chain_density = Scientific.fromFloatDigits (0 :: Double)
+    , Types.cluster_startup_overhead_s = 0
+  }
+--  , Types.overlay = mempty
+}
 
 --------------------------------------------------------------------------------
 
@@ -232,6 +344,38 @@ generator f p = p {Types.generator = f (Types.generator p)}
 
 generatorTps :: Scientific.Scientific -> Types.Profile -> Types.Profile
 generatorTps tps = generator (\g -> g {Types.tps = tps})
+
+--------------------------------------------------------------------------------
+
+cluster :: (Types.Cluster -> Types.Cluster) -> Types.Profile -> Types.Profile
+cluster f p = p {Types.cluster = f (Types.cluster p)}
+
+clusterMinimunStorage :: (Maybe (Types.ByNodeType Int)) -> Types.Profile -> Types.Profile
+clusterMinimunStorage ms = cluster (\c -> c {Types.minimun_storage = ms})
+
+clusterKeepRunningOn :: Types.Profile -> Types.Profile
+clusterKeepRunningOn = cluster (\c -> c {Types.keep_running = True})
+
+nomad :: (Types.Nomad -> Types.Nomad) -> Types.Profile -> Types.Profile
+nomad f p = cluster (\c -> c {Types.nomad = f (Types.nomad c)}) p
+
+nomadNamespace :: String -> Types.Profile -> Types.Profile
+nomadNamespace ns = nomad (\n -> n {Types.namespace = ns})
+
+nomadClass :: String -> Types.Profile -> Types.Profile
+nomadClass nc = nomad (\n -> n {Types.nomad_class = nc})
+
+nomadResources :: (Types.ByNodeType Types.Resources) -> Types.Profile -> Types.Profile
+nomadResources r = nomad (\n -> n {Types.resources = r})
+
+nomadSSHLogsOn :: Types.Profile -> Types.Profile
+nomadSSHLogsOn = nomad (\n -> n {Types.fetch_logs_ssh = True})
+
+aws :: (Types.ClusterAWS -> Types.ClusterAWS) -> Types.Profile -> Types.Profile
+aws f p = cluster (\c -> c {Types.aws = f (Types.aws c)}) p
+
+awsInstanceTypes :: (Types.ByNodeType String) -> Types.Profile -> Types.Profile
+awsInstanceTypes i = aws (\n -> n {Types.instance_type = i})
 
 --------------------------------------------------------------------------------
 
