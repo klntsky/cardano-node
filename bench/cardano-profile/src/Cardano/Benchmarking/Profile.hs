@@ -12,7 +12,7 @@ module Cardano.Benchmarking.Profile (
   -- Composition topology.
   , uniCircle, torus, torusDense
   -- Composition location.
-  , loopback, nomadPerf
+  , loopback, nomadPerf, nomadSsd
   -- Composition size.
   , hosts, pools, hostsChainsync, withExplorerNode
   , withChaindbServer
@@ -21,7 +21,7 @@ module Cardano.Benchmarking.Profile (
   , utxo, delegators, epochLength, parameterK
 
   -- Scenario.
-  , idle, tracerOnly, fixedLoaded, chainsync
+  , idle, tracerOnly, fixedLoaded, chainsync, latency
 
   -- Node's --shutdown-on-*-sync.
   , shutdownOnSlot, shutdownOnBlock, shutdownOnOff
@@ -87,6 +87,13 @@ nomadPerf = comp (\c -> c {
     Types.AWS Types.EU_CENTRAL_1
   , Types.AWS Types.US_EAST_1
   , Types.AWS Types.AP_SOUTHEAST_2
+  ]
+})
+
+nomadSsd :: Types.Profile -> Types.Profile
+nomadSsd = comp (\c -> c {
+  Types.locations = [
+    Types.AWS Types.EU_CENTRAL_1
   ]
 })
 
@@ -165,6 +172,9 @@ fixedLoaded p = p {Types.scenario = Types.FixedLoaded}
 
 chainsync :: Types.Profile -> Types.Profile
 chainsync p = p {Types.scenario = Types.Chainsync}
+
+latency :: Types.Profile -> Types.Profile
+latency p = p {Types.scenario = Types.Latency}
 
 --------------------------------------------------------------------------------
 

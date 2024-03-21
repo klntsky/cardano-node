@@ -207,7 +207,7 @@ instance Aeson.FromJSON Genesis
 
 --------------------------------------------------------------------------------
 
-data Scenario = Idle | TracerOnly | Fixed | FixedLoaded | Chainsync
+data Scenario = Idle | TracerOnly | Fixed | FixedLoaded | Chainsync | Latency
   deriving (Eq, Show, Generic)
 
 instance Aeson.ToJSON Scenario where
@@ -216,6 +216,7 @@ instance Aeson.ToJSON Scenario where
   toJSON Fixed       = Aeson.toJSON ("fixed"        :: Text.Text)
   toJSON FixedLoaded = Aeson.toJSON ("fixed-loaded" :: Text.Text)
   toJSON Chainsync   = Aeson.toJSON ("chainsync"    :: Text.Text)
+  toJSON Latency     = Aeson.toJSON ("latency"      :: Text.Text)
 
 instance Aeson.FromJSON Scenario where
   parseJSON = Aeson.withText "Scenario" $ \t -> case t of
@@ -224,6 +225,7 @@ instance Aeson.FromJSON Scenario where
     "fixed"        -> return Fixed
     "fixed-loaded" -> return FixedLoaded
     "chainsync"    -> return Chainsync
+    "latency"      -> return Latency
     _              -> fail $ "Unknown Scenario: \"" ++ Text.unpack t ++ "\""
 
 --------------------------------------------------------------------------------

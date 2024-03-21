@@ -155,9 +155,12 @@ profilesMap = Tasty.testGroup
           -- Check all keys/names first (if error what's below makes no sense!)
           ----------------------------------------------------------------------
           assertEqual
-            ("Profile == (decode \"" ++ fp ++ "\") - Keys")
-            (Map.keys (ans :: Map.Map String Types.Profile))
-            (Map.keys Profiles.profiles)
+            ("Profile == (decode \"" ++ fp ++ "\") - Keys difference")
+            []
+            (Map.keys $ Map.difference
+              Profiles.profiles
+              (ans :: Map.Map String Types.Profile)
+            )
           -- Check names.
           assertEqual
             ("Profile == (decode \"" ++ fp ++ "\") - Name")

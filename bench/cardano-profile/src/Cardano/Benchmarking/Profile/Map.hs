@@ -140,19 +140,23 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   -- fast: 2 nodes, FixedLoaded and "--shutdown-on-block-synced 1"
   ------------------------------------------------------------------------------
   let fast =   dummy
-             & P.uniCircle . P.hosts 2
-             . P.loopback
-             . P.utxo 0 . P.delegators 0
+             & P.utxo 0 . P.delegators 0
              . P.epochLength 600 . P.parameterK 3
              . P.fixedLoaded . P.generatorTps 15
              . P.shutdownOnBlock 1
              . P.analysisStandard
+      fastLocal = fast & P.uniCircle  . P.hosts 2  . P.loopback
+      fastPerf  = fast & P.torusDense . P.hosts 52 . P.nomadPerf . P.withExplorerNode
+      fastSsd   = fast & P.uniCircle  . P.hosts 1  . P.nomadSsd
   in [
-    (fast & P.name "fast"            . P.tracerOn  . P.newTracing                                )
-  , (fast & P.name "fast-plutus"     . P.tracerOn  . P.newTracing           . P.analysisSizeSmall)
-  , (fast & P.name "fast-p2p"        . P.tracerOn  . P.newTracing . P.p2pOn                      )
-  , (fast & P.name "fast-oldtracing" . P.tracerOn  . P.oldTracing                                )
-  , (fast & P.name "fast-notracer"   . P.tracerOff . P.newTracing                                )
+    (fastLocal & P.name "fast"                  . P.tracerOn  . P.newTracing                                )
+  , (fastLocal & P.name "fast-plutus"           . P.tracerOn  . P.newTracing           . P.analysisSizeSmall)
+  , (fastLocal & P.name "fast-p2p"              . P.tracerOn  . P.newTracing . P.p2pOn                      )
+  , (fastLocal & P.name "fast-oldtracing"       . P.tracerOn  . P.oldTracing                                )
+  , (fastLocal & P.name "fast-notracer"         . P.tracerOff . P.newTracing                                )
+  , (fastPerf  & P.name "fast-nomadperf"        . P.tracerOn  . P.newTracing . P.p2pOn                      )
+  , (fastPerf  & P.name "fast-nomadperf-nop2p"  . P.tracerOn  . P.newTracing                                )
+  , (fastSsd   & P.name "fast-nomadperfssd"     . P.tracerOn  . P.newTracing . P.p2pOn                      )
   ]
   ++
   ------------------------------------------------------------------------------
@@ -269,35 +273,41 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
                     . P.newTracing
                     . P.analysisStandard
       -- "--shutdown-on-slot-synced 2400"
-      forgeStressSolo     = forgeStress      & P.shutdownOnSlot 2400 . P.hosts 1 . P.utxo 10000000 . P.delegators 1300000
-      forgeStressSoloPre  = forgeStressSolo  &                                     P.utxo  4000000 . P.delegators 1000000
-      forgeStressSmall    = forgeStress      & P.shutdownOnSlot 2400 . P.hosts 3 . P.utxo 10000000 . P.delegators 1300000
-      forgeStressSmallPre = forgeStressSmall &                                     P.utxo  4000000 . P.delegators 1000000
-      -- "--shutdown-on-slot-synced 4800"
-      forgeStressLarge    = forgeStress & P.shutdownOnSlot 4800 . P.hosts 6 . P.utxo 10000000 . P.delegators 1300000
+      forgeStress1      = P.hosts 1
+      forgeStress3      = P.hosts 3
+      forgeStress6      = P.hosts 6
+      forgeStressPre    = P.utxo  4000000 . P.delegators 1000000
+      forgeStressNonPre = P.utxo 10000000 . P.delegators 1300000
+      forgeStressXS     = P.shutdownOnSlot 1200
+      forgeStressM      = P.shutdownOnSlot 2400
+      forgeStressXL     = P.shutdownOnSlot 4800
   in [
-  -- 1 node versions.
-    (forgeStressSolo       & P.name "forge-stress-solo"          . P.tracerOn                                         . P.analysisUnitary   )
-  , (forgeStressSoloPre    & P.name "forge-stress-pre-solo"      . P.tracerOn                                         . P.analysisUnitary   )
-  , (forgeStressSolo       & P.name "forge-stress-plutus-solo"   . P.tracerOn                                         . P.analysisSizeSmall )
-  -- 3 nodes versions.
-  , (forgeStressSmall      & P.name "forge-stress"               . P.tracerOn                                         . P.analysisUnitary   )
-  , (forgeStressSmallPre   & P.name "forge-stress-light"         . P.tracerOn                                         . P.analysisUnitary   )
-  , (forgeStressSmall      & P.name "forge-stress-notracer"      . P.tracerOff                                        . P.analysisUnitary   )
+  -- 1 node versions (non-pre).
+    (forgeStress & P.name "forge-stress-solo-xs"       . forgeStress1 . forgeStressNonPre . forgeStressXS . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-solo"          . forgeStress1 . forgeStressNonPre . forgeStressM  . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-plutus-solo"   . forgeStress1 . forgeStressNonPre . forgeStressM  . P.tracerOn                                         . P.analysisSizeSmall )
+  -- 1 node versions (pre).
+  , (forgeStress & P.name "forge-stress-pre-solo-xs"   . forgeStress1 . forgeStressPre    . forgeStressXS . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-pre-solo"      . forgeStress1 . forgeStressPre    . forgeStressM  . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-pre-solo-xl"   . forgeStress1 . forgeStressPre    . forgeStressXL . P.tracerOn                                         . P.analysisEpoch3Plus)
+  -- 3 nodes versions (non-pre).
+  , (forgeStress & P.name "forge-stress"               . forgeStress3 . forgeStressNonPre . forgeStressM  . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-notracer"      . forgeStress3 . forgeStressNonPre . forgeStressM  . P.tracerOff                                        . P.analysisUnitary   )
   -- TODO: FIXME: "forge-stress-p2p" has no P2P enabled!
-  , (forgeStressSmall      & P.name "forge-stress-p2p"           . P.tracerOn                                         . P.analysisSizeSmall )
-  , (forgeStressSmall      & P.name "forge-stress-plutus"        . P.tracerOn                                         . P.analysisSizeSmall )
-  , (forgeStressSmallPre   & P.name "forge-stress-pre"           . P.tracerOn                                         . P.analysisUnitary   )
-  , (forgeStressSmallPre   & P.name "forge-stress-pre-plutus"    . P.tracerOn                                         . P.analysisSizeSmall )
-  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsA4m"    . P.tracerOn                   . P.rtsGcAllocSize  4 . P.analysisUnitary   )
-  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsA64m"   . P.tracerOn                   . P.rtsGcAllocSize 64 . P.analysisUnitary   )
-  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsN3"     . P.tracerOn  . P.rtsThreads 3                       . P.analysisUnitary   )
-  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsA4mN3"  . P.tracerOn  . P.rtsThreads 3 . P.rtsGcAllocSize  4 . P.analysisUnitary   )
-  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsA64mN3" . P.tracerOn  . P.rtsThreads 3 . P.rtsGcAllocSize 64 . P.analysisUnitary   )
-  , (forgeStressSmallPre   & P.name "forge-stress-pre-rtsxn"     . P.tracerOn                   . P.rtsGcNonMoving    . P.analysisUnitary   )
-  , (forgeStressSmallPre   & P.name "forge-stress-pre-notracer"  . P.tracerOff                                        . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-p2p"           . forgeStress3 . forgeStressNonPre . forgeStressM  . P.tracerOn                                         . P.analysisSizeSmall )
+  , (forgeStress & P.name "forge-stress-plutus"        . forgeStress3 . forgeStressNonPre . forgeStressM  . P.tracerOn                                         . P.analysisSizeSmall )
+  -- 3 nodes versions (pre).
+  , (forgeStress & P.name "forge-stress-pre"           . forgeStress3 . forgeStressPre    . forgeStressM  . P.tracerOn                                         . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-pre-plutus"    . forgeStress3 . forgeStressPre    . forgeStressM  . P.tracerOn                                         . P.analysisSizeSmall )
+  , (forgeStress & P.name "forge-stress-pre-rtsA4m"    . forgeStress3 . forgeStressPre    . forgeStressM  . P.tracerOn                   . P.rtsGcAllocSize  4 . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-pre-rtsA64m"   . forgeStress3 . forgeStressPre    . forgeStressM  . P.tracerOn                   . P.rtsGcAllocSize 64 . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-pre-rtsN3"     . forgeStress3 . forgeStressPre    . forgeStressM  . P.tracerOn  . P.rtsThreads 3                       . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-pre-rtsA4mN3"  . forgeStress3 . forgeStressPre    . forgeStressM  . P.tracerOn  . P.rtsThreads 3 . P.rtsGcAllocSize  4 . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-pre-rtsA64mN3" . forgeStress3 . forgeStressPre    . forgeStressM  . P.tracerOn  . P.rtsThreads 3 . P.rtsGcAllocSize 64 . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-pre-rtsxn"     . forgeStress3 . forgeStressPre    . forgeStressM  . P.tracerOn                   . P.rtsGcNonMoving    . P.analysisUnitary   )
+  , (forgeStress & P.name "forge-stress-pre-notracer"  . forgeStress3 . forgeStressPre    . forgeStressM  . P.tracerOff                                        . P.analysisUnitary   )
   -- Double nodes and time running version.
-  , (forgeStressLarge      & P.name "forge-stress-large"         . P.tracerOn                                         . P.analysisEpoch3Plus)
+  , (forgeStress & P.name "forge-stress-large"         . forgeStress6 . forgeStressNonPre . forgeStressXL . P.tracerOn                                         . P.analysisEpoch3Plus)
   ]
   ++
   ------------------------------------------------------------------------------
@@ -483,6 +493,21 @@ profilesNoEra = Map.fromList $ map (\p -> (Types.name p, p)) $
   -- Plutus
   , (plutus & P.name "plutus-nomadperf"                  . P.newTracing . P.p2pOn  . P.analysisSizeSmall . P.analysisEpoch3Plus)
   , (plutus & P.name "plutus-nomadperf-nop2p"            . P.newTracing . P.p2pOff . P.analysisSizeSmall . P.analysisEpoch3Plus)
+  ]
+  ++
+  ------------------------------------------------------------------------------
+  -- 
+  ------------------------------------------------------------------------------
+  let latency =   dummy
+                & P.torusDense . P.hosts 52 . P.withExplorerNode
+                . P.nomadPerf
+                . P.utxo 0 . P.delegators 0
+                . P.epochLength 600 . P.parameterK 3
+                . P.latency . P.generatorTps 15
+                . P.tracerOn . P.newTracing
+                . P.analysisStandard
+  in [
+    (latency & P.name "latency-nomadperf" . P.p2pOn)
   ]
   ++
   ------------------------------------------------------------------------------
