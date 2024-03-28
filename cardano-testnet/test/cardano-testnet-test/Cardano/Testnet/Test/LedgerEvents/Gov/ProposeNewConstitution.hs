@@ -314,7 +314,7 @@ hprop_ledger_events_propose_new_constitution = H.integrationWorkspace "propose-n
   -- TODO: Attempt a protocol parameters update (witnessed with guard rail script)
   pparamsUpdateFp <- H.note $ work </> "protocol-parameters-upate.action"
   void $ H.execCli' execConfig
-      [ convertToEraString cEra, "governance", "action", "create-protocol-parameters-update"
+      [ anyEraToString cEra, "governance", "action", "create-protocol-parameters-update"
       , "--testnet"
       , "--governance-action-deposit", show @Int 1_000_000 -- TODO: retrieve this from conway genesis.
       , "--deposit-return-stake-script-file", guardRailScript
@@ -330,7 +330,7 @@ hprop_ledger_events_propose_new_constitution = H.integrationWorkspace "propose-n
   txinColl <- findLargestUtxoForPaymentKey epochStateView sbe $ wallets !! 2
 
   void $ H.execCli' execConfig
-    [ convertToEraString cEra, "transaction", "build"
+    [ anyEraToString cEra, "transaction", "build"
     , "--change-address", Text.unpack $ paymentKeyInfoAddr $ head wallets
     , "--tx-in", Text.unpack $ renderTxIn txin4
     , "--tx-in", Text.unpack $ renderTxIn txin5
