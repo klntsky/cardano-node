@@ -77,7 +77,7 @@ hprop_ledger_events_propose_new_constitution = H.integrationWorkspace "propose-n
   TestnetRuntime
     { testnetMagic
     , poolNodes
-    , wallets=wallet0:wallet1:_
+    , wallets=wallet0:wallet1:wallet2:_
     , configurationFile
     }
     <- cardanoTestnetDefault fastTestnetOptions conf
@@ -317,7 +317,7 @@ hprop_ledger_events_propose_new_constitution = H.integrationWorkspace "propose-n
       [ anyEraToString cEra, "governance", "action", "create-protocol-parameters-update"
       , "--testnet"
       , "--governance-action-deposit", show @Int 1_000_000 -- TODO: retrieve this from conway genesis.
-      , "--deposit-return-stake-script-file", guardRailScript
+      , "--deposit-return-stake-verification-key-file", stakeVkeyFp
       , "--anchor-url", "https://tinyurl.com/3wrwb2as"
       , "--anchor-data-hash", proposalAnchorDataHash
       , "--constitution-script-hash", constitutionScriptHash
@@ -325,17 +325,17 @@ hprop_ledger_events_propose_new_constitution = H.integrationWorkspace "propose-n
       , "--out-file", pparamsUpdateFp
       ]
   updateProposalTxBody <- H.note $ work </> "update-proposal.txbody"
-  txin4 <- findLargestUtxoForPaymentKey epochStateView sbe $ wallets !! 0
-  txin5 <- findLargestUtxoForPaymentKey epochStateView sbe $ wallets !! 1
-  txinColl <- findLargestUtxoForPaymentKey epochStateView sbe $ wallets !! 2
+  txin4 <- findLargestUtxoForPaymentKey epochStateView sbe wallet0
+  txin5 <- findLargestUtxoForPaymentKey epochStateView sbe wallet1
+  txinColl <- findLargestUtxoForPaymentKey epochStateView sbe wallet2
 
   void $ H.execCli' execConfig
     [ anyEraToString cEra, "transaction", "build"
-    , "--change-address", Text.unpack $ paymentKeyInfoAddr $ head wallets
+    , "--change-address", Text.unpack $ paymentKeyInfoAddr wallet0
     , "--tx-in", Text.unpack $ renderTxIn txin4
     , "--tx-in", Text.unpack $ renderTxIn txin5
     , "--tx-in-collateral", Text.unpack $ renderTxIn txinColl
-    , "--tx-out", Text.unpack (paymentKeyInfoAddr (wallets !! 1)) <> "+" <> show @Int 5_000_000
+    , "--tx-out", Text.unpack (paymentKeyInfoAddr wallet1) <> "+" <> show @Int 5_000_000
     , "--proposal-file", pparamsUpdateFp
     , "--proposal-script-file", guardRailScript
     , "--proposal-redeemer-value", "0"
@@ -347,12 +347,9 @@ hprop_ledger_events_propose_new_constitution = H.integrationWorkspace "propose-n
   void $ H.execCli' execConfig
     [ "conway", "transaction", "sign"
     , "--tx-body-file", updateProposalTxBody
-    , "--signing-key-file", paymentSKey $ paymentKeyInfoPair $ wallets !! 0
-    , "--signing-key-file", paymentSKey $ paymentKeyInfoPair $ wallets !! 1
-    , "--signing-key-file", paymentSKey $ paymentKeyInfoPair $ wallets !! 2
-    , "--signing-key-file", drepSKeyFp 1
-    , "--signing-key-file", drepSKeyFp 2
-    , "--signing-key-file", drepSKeyFp 3
+    , "--signing-key-file", paymentSKey $ paymentKeyInfoPair wallet0
+    , "--signing-key-file", paymentSKey $ paymentKeyInfoPair wallet1
+    , "--signing-key-file", paymentSKey $ paymentKeyInfoPair wallet2
     , "--out-file", updateProposalTx
     ]
 
