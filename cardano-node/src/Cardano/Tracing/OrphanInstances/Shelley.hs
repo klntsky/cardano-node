@@ -571,16 +571,6 @@ instance
              , "addrs"   .= addrs
              ]
 
-
-instance ToJSON Allegra.ValidityInterval where
-  toJSON vi =
-    Aeson.object $
-        [ "invalidBefore"    .= x | x <- mbfield (Allegra.invalidBefore    vi) ]
-     ++ [ "invalidHereafter" .= x | x <- mbfield (Allegra.invalidHereafter vi) ]
-    where
-      mbfield SNothing  = []
-      mbfield (SJust x) = [x]
-
 instance
   ( ToObject (Ledger.EraRuleFailure "PPUP" ledgerera)
   , ToJSON (Ledger.TxOut ledgerera)
@@ -1149,32 +1139,6 @@ instance
              ]
   toObject verb (Alonzo.UpdateFailure pFailure) =
     toObject verb pFailure
-
-deriving newtype instance ToJSON Alonzo.IsValid
-
-instance ToJSON Alonzo.TagMismatchDescription where
-  toJSON tmd = case tmd of
-    Alonzo.PassedUnexpectedly ->
-      object
-        [ "kind" .= String "TagMismatchDescription"
-        , "error" .= String "PassedUnexpectedly"
-        ]
-    Alonzo.FailedUnexpectedly forReasons ->
-      object
-        [ "kind" .= String "TagMismatchDescription"
-        , "error" .= String "FailedUnexpectedly"
-        , "reconstruction" .= forReasons
-        ]
-
-instance ToJSON Alonzo.FailureDescription where
-  toJSON f = case f of
-    Alonzo.PlutusFailure t _bs ->
-      object
-        [ "kind" .= String "FailureDescription"
-        , "error" .= String "PlutusFailure"
-        , "description" .= t
-        -- , "reconstructionDetail" .= bs
-        ]
 
 instance
   ( Ledger.Era ledgerera
