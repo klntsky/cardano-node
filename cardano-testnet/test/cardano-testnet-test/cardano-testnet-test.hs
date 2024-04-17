@@ -16,6 +16,7 @@ import qualified Cardano.Testnet.Test.Cli.QuerySlotNumber
 import qualified Cardano.Testnet.Test.FoldBlocks
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.DRepActivity
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.DRepDeposits
+import qualified Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedAbstainDRep
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.ProposeNewConstitution
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.ProposeNewConstitutionSPO as LedgerEvents
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.TreasuryWithdrawal as LedgerEvents
@@ -48,7 +49,8 @@ tests = do
             , H.ignoreOnWindows "Treasury Growth" LedgerEvents.prop_check_if_treasury_is_growing
             -- TODO: Replace foldBlocks with checkLedgerStateCondition
             , T.testGroup "Governance"
-                [ H.ignoreOnMacAndWindows "ProposeAndRatifyNewConstitution" Cardano.Testnet.Test.LedgerEvents.Gov.ProposeNewConstitution.hprop_ledger_events_propose_new_constitution
+                [ H.ignoreOnWindows "Predefined Abstain DRep" Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedAbstainDRep.hprop_check_predefined_abstain_drep
+                , H.ignoreOnMacAndWindows "ProposeAndRatifyNewConstitution" Cardano.Testnet.Test.LedgerEvents.Gov.ProposeNewConstitution.hprop_ledger_events_propose_new_constitution
                 , H.ignoreOnWindows "DRep Activity" Cardano.Testnet.Test.LedgerEvents.Gov.DRepActivity.hprop_check_drep_activity
                 , H.ignoreOnWindows "DRep Deposits" Cardano.Testnet.Test.LedgerEvents.Gov.DRepDeposits.hprop_ledger_events_drep_deposits
                   -- FIXME Those tests are flaky
