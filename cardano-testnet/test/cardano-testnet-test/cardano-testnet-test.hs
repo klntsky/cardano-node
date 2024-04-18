@@ -39,6 +39,7 @@ import           Test.Tasty (TestTree)
 import qualified Test.Tasty.Ingredients as T
 import qualified Test.Tasty.Options as T
 import qualified Test.Tasty.Runners as T
+import qualified Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedNoConfidenceDRep
 
 tests :: IO TestTree
 tests = do
@@ -50,6 +51,7 @@ tests = do
             -- TODO: Replace foldBlocks with checkLedgerStateCondition
             , T.testGroup "Governance"
                 [ H.ignoreOnWindows "Predefined Abstain DRep" Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedAbstainDRep.hprop_check_predefined_abstain_drep
+                , H.ignoreOnWindows "Predefined No Confidence DRep" Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedNoConfidenceDRep.hprop_check_predefined_no_confidence_drep
                 , H.ignoreOnMacAndWindows "ProposeAndRatifyNewConstitution" Cardano.Testnet.Test.LedgerEvents.Gov.ProposeNewConstitution.hprop_ledger_events_propose_new_constitution
                 , H.ignoreOnWindows "DRep Activity" Cardano.Testnet.Test.LedgerEvents.Gov.DRepActivity.hprop_check_drep_activity
                 , H.ignoreOnWindows "DRep Deposits" Cardano.Testnet.Test.LedgerEvents.Gov.DRepDeposits.hprop_ledger_events_drep_deposits
