@@ -8,6 +8,10 @@
 
 module Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedAbstainDRep
   ( hprop_check_predefined_abstain_drep
+  , delegateToAutomaticDRep
+  , desiredPoolNumberProposalTest
+  , getDesiredPoolNumberValue
+  , voteChangeProposal
   ) where
 
 import           Cardano.Api as Api
@@ -138,8 +142,25 @@ delegateToAlwaysAbstain
   -> PaymentKeyInfo -- ^ Wallet that will pay for the transaction.
   -> StakingKeyPair -- ^ Staking key pair used for delegation.
   -> m ()
-delegateToAlwaysAbstain execConfig epochStateView configurationFile socketPath sbe work prefix
-                        payingWallet skeyPair@(StakingKeyPair vKeyFile _sKeyFile) = do
+delegateToAlwaysAbstain execConfig epochStateView configurationFile socketPath sbe work prefix =
+  delegateToAutomaticDRep execConfig epochStateView configurationFile socketPath sbe work prefix
+                          "--always-abstain"
+
+delegateToAutomaticDRep
+  :: (HasCallStack, MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m)
+  => H.ExecConfig
+  -> EpochStateView
+  -> FilePath
+  -> FilePath
+  -> ShelleyBasedEra ConwayEra
+  -> FilePath
+  -> String
+  -> String
+  -> PaymentKeyInfo
+  -> StakingKeyPair
+  -> m ()
+delegateToAutomaticDRep execConfig epochStateView configurationFile socketPath sbe work prefix
+                        flag payingWallet skeyPair@(StakingKeyPair vKeyFile _sKeyFile) = do
 
   let era = toCardanoEra sbe
       cEra = AnyCardanoEra era
@@ -150,7 +171,7 @@ delegateToAlwaysAbstain execConfig epochStateView configurationFile socketPath s
   let voteDelegationCertificatePath = baseDir </> "delegation-certificate.delegcert"
   void $ H.execCli' execConfig
     [ "conway", "stake-address", "vote-delegation-certificate"
-    , "--always-abstain"
+    , flag
     , "--stake-verification-key-file", vKeyFile
     , "--out-file", voteDelegationCertificatePath
     ]
