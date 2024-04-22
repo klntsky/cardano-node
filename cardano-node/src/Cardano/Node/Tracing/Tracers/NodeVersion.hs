@@ -11,18 +11,22 @@ module Cardano.Node.Tracing.Tracers.NodeVersion
 )
  where
 
-import           Cardano.Logging
 import           Data.Aeson (toJSON, (.=))
 import           Data.Text (Text, pack)
 
 import           Data.Version (Version (..), showVersion)
-
-import           Cardano.Git.Rev (gitRev)
-
-import           Paths_cardano_node (version)
 import           System.Info (arch, compilerName, compilerVersion, os)
 
 
+import           Cardano.Git.Rev (gitRev)
+import           Cardano.Logging
+
+
+import           Paths_cardano_node (version)
+
+
+
+-- | Node version information
 
 data NodeVersionTrace = NodeVersionTrace
   { applicationName    :: Text
@@ -33,6 +37,8 @@ data NodeVersionTrace = NodeVersionTrace
   , compilerVersion    :: Version
   , gitRevision        :: Text
   } deriving (Eq, Show)
+
+-- | Get the node version information
 
 getNodeVersion :: NodeVersionTrace
 getNodeVersion =
@@ -45,6 +51,7 @@ getNodeVersion =
 
       gitRevision = $(gitRev)
   in NodeVersionTrace {..}
+
 
 instance MetaTrace NodeVersionTrace where
   namespaceFor NodeVersionTrace {}  =
