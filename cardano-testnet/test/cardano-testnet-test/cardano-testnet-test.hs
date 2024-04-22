@@ -17,6 +17,7 @@ import qualified Cardano.Testnet.Test.FoldBlocks
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.DRepActivity
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.DRepDeposits
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedAbstainDRep
+import qualified Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedNoConfidenceDRep
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.ProposeNewConstitution
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.ProposeNewConstitutionSPO as LedgerEvents
 import qualified Cardano.Testnet.Test.LedgerEvents.Gov.TreasuryWithdrawal as LedgerEvents
@@ -39,7 +40,6 @@ import           Test.Tasty (TestTree)
 import qualified Test.Tasty.Ingredients as T
 import qualified Test.Tasty.Options as T
 import qualified Test.Tasty.Runners as T
-import qualified Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedNoConfidenceDRep
 
 tests :: IO TestTree
 tests = do
