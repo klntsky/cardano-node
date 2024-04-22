@@ -160,13 +160,6 @@ case "$op" in
         local run=${1:?$usage}; shift
         local dir=$(run compute-path "$run")
 
-        # Where is the relative path? Open-coding . is not good.
-        # Some kind of directory prefix variable should be used
-        # instead of this.
-        env TEXINPUTS=".:$dir/analysis:${TEXINPUTS:-""}" \
-                xelatex -output-directory "$dir/analysis/" \
-                        ./nix/workbench/latex/report.latex
-
 	# This is where we hope to use the directly-generated LaTeX.
         progress "analyse | report" "rendering report:  $(white $run)"
         local emacs_args=(
