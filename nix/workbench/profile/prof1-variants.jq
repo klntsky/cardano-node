@@ -85,10 +85,17 @@ def all_profile_variants:
       { tps:                                (1 * $M / (360 * 20))
       }
     } as $dataset_dish
-  |
+
+  ### START DREP
+ | ($dataset_miniature | .genesis |= (. as $g | .drep_delegators |= $g.delegators * 0.75)) as $dataset_miniature_drep
+ | ($dataset_small     | .genesis |= (. as $g | .drep_delegators |= $g.delegators * 0.75)) as $dataset_small_drep
+ | ($dataset_24m       | .genesis |= (. as $g | .drep_delegators |= $g.delegators * 0.75)) as $dataset_24m_drep
+  ### END DREP
+
   ##
   ### Definition vocabulary:  chain
   ##
+  |
     { chaindb:
       { mainnet_chunks:
         { chaindb_server:               10
@@ -612,6 +619,10 @@ def all_profile_variants:
     { desc: "Miniature dataset, CI-friendly duration, bench scale"
     }) as $cibench_base
   |
+   ($scenario_fixed_loaded * $doublet * $dataset_miniature_drep * $for_15blk * $no_filtering *
+    { desc: "Miniature dataset, CI-friendly duration, bench scale with dreps"
+    }) as $cibench_base_drep
+  |
    ($scenario_fixed_loaded * $hexagon * $torus * $dataset_empty * $for_15blk * $no_filtering * $with_resources *
     { desc: "6 low-footprint nodes in a torus topology, 5 minutes runtime"
     }) as $tracebench_base
@@ -958,6 +969,11 @@ def all_profile_variants:
     { name: "ci-bench-nomadperf-nop2p"
     , desc: "ci-bench on P&T exclusive cluster with P2P disabled"
     }
+  ## DREP
+  , $cibench_base_drep *
+    { name: "ci-bench-drep"
+    }
+  ## DREP
 
   ## CI variants: test duration, 3 blocks, dense10
   , $citest_base * $solo_dense10 *

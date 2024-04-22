@@ -306,6 +306,7 @@ in
         "--delegated-supply ${toString derived.supply_delegated}"
         "--pools ${toString composition.n_pools}"
         "--stake-delegators ${toString derived.delegators_effective}"
+        "--transient-drep-keys ${toString genesis.drep_delegators}"
         "--stuffed-utxo ${toString derived.utxo_stuffed}"
         "--testnet-magic ${toString genesis.network_magic}"
       ];
