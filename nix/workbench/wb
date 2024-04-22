@@ -301,7 +301,13 @@ do case "$1" in
        * ) break;; esac; shift; done
 
 main() {
-    local op=${1:?$(usage_main)}; shift || true
+    # if $1 is not set ...
+    if [ ! -v 1 ]; then
+      usage_main
+      exit 1
+    fi
+    local op=$1
+    shift
 
     case "$op" in
         ## Public, primary:
