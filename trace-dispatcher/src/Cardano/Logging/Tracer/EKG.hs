@@ -61,6 +61,11 @@ ekgTracer storeOrServer = liftIO $ do
       (DoubleM name theDouble) = do
         label <- modifyMVar rgsLabels (setFunc Metrics.createLabel getLabel name)
         Label.set label ((pack . show) theDouble)
+    setIt _rgsGauges rgsLabels _rgsCounters _namespace
+      (PrometheusM name keyLabels) = do
+        label <- modifyMVar rgsLabels (setFunc Metrics.createLabel getLabel name)
+        Label.set label (presentPrometheusM keyLabels)
+
     setIt _rgsGauges _rgsLabels rgsCounters _namespace
       (CounterM name mbInt) = do
         counter <- modifyMVar rgsCounters (setFunc Metrics.createCounter getCounter name)
@@ -84,3 +89,9 @@ ekgTracer storeOrServer = liftIO $ do
                         Right server -> creator2 name server
             let rgsMap' = Map.insert name gauge rgsMap
             pure (rgsMap', gauge)
+
+presentPrometheusM :: [(Text, Text)] -> Text
+presentPrometheusM labels = "{" <> foldr (\(k, v) acc -> k <> "=\"" <> v <>
+                                    (if k == fst (last labels)
+                                      then "\" " <> acc
+                                      else "\", " <> acc)) "" labels <> "} 1"

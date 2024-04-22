@@ -163,6 +163,7 @@ nullTracersP2P = Tracers
   , nodeInfoTracer = nullTracer
   , nodeStartupInfoTracer = nullTracer
   , nodeStateTracer = nullTracer
+  , nodeVersionTracer = nullTracer
   , resourcesTracer = nullTracer
   , peersTracer = nullTracer
   }
@@ -180,6 +181,7 @@ nullTracersNonP2P = Tracers
   , nodeInfoTracer = nullTracer
   , nodeStartupInfoTracer = nullTracer
   , nodeStateTracer = nullTracer
+  , nodeVersionTracer = nullTracer
   , resourcesTracer = nullTracer
   , peersTracer = nullTracer
   }
@@ -345,6 +347,7 @@ mkTracers blockConfig tOpts@(TracingOnLegacy trSel) tr nodeKern ekgDirect enable
     , nodeInfoTracer = nullTracer
     , nodeStartupInfoTracer = nullTracer
     , nodeStateTracer = nullTracer
+    , nodeVersionTracer = nullTracer
     , resourcesTracer = nullTracer
     , peersTracer = nullTracer
     }
@@ -503,6 +506,7 @@ mkTracers _ _ _ _ _ enableP2P =
     , nodeInfoTracer = nullTracer
     , nodeStartupInfoTracer = nullTracer
     , nodeStateTracer = nullTracer
+    , nodeVersionTracer = nullTracer
     , resourcesTracer = nullTracer
     , peersTracer = nullTracer
     }
