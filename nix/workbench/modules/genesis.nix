@@ -36,6 +36,14 @@ in
 
       ## UTxO & delegation
 
+      total_supply = mkOption {
+        description = ''
+          The maximum possible amount of Lovelace, which is evenly distributed across stake holders.
+        '';
+        type = types.int;
+        default = 1000000000000000;
+      };
+
       per_pool_balance = mkOption {
         # part of the profile
         description = "UTxO & delegation: per_pool_balance";
@@ -234,6 +242,11 @@ in
         type = types.separatedString " ";
       };
 
+      create-testnet-data-args = mkOption {
+        description = "Arguments to cardano-cli genesis create-testnet-data";
+        type = types.separatedString " ";
+      };
+
       byron-genesis-args = mkOption {
         description = "Arguments to cardano-cli byron genesis genesis";
         type = types.separatedString " ";
@@ -268,6 +281,9 @@ in
 
   config = {
     genesis = {
+
+      total_supply = genesis.funds_balance + derived.supply_delegated;
+
       create-staked-args = concatStringsSep " " ([
         "--supply ${toString genesis.funds_balance}"
         "--gen-utxo-keys 1"
@@ -282,6 +298,17 @@ in
         "--bulk-pool-cred-files ${toString composition.n_dense_hosts}"
         "--bulk-pools-per-file ${toString composition.dense_pool_density}"
       ]);
+
+      create-testnet-data-args = concatStringsSep " " [
+        "--total-supply ${toString genesis.total_supply}"
+        "--utxo-keys 1"
+        "--genesis-keys ${toString composition.n_bft_hosts}"
+        "--delegated-supply ${toString derived.supply_delegated}"
+        "--pools ${toString composition.n_pools}"
+        "--stake-delegators ${toString derived.delegators_effective}"
+        "--stuffed-utxo ${toString derived.utxo_stuffed}"
+        "--testnet-magic ${toString genesis.network_magic}"
+      ];
 
       byron-genesis-args = concatStringsSep " " ([
         "--k ${toString genesis.parameter_k}"
