@@ -5,10 +5,10 @@ module Testnet.EpochStateProcessing
   , findCondition
   ) where
 
-import           Cardano.Api (AnyNewEpochState (..), ConwayEra, EpochNo, File (File),
-                   FoldBlocksError, LedgerStateCondition (..), MonadIO, ShelleyBasedEra,
-                   ValidationMode (FullValidation), foldEpochState, runExceptT,
-                   shelleyBasedEraConstraints)
+import           Cardano.Api (AnyNewEpochState (..), ConwayEra, ConwayEraOnwards, EpochNo,
+                   File (File), FoldBlocksError, LedgerStateCondition (..), MonadIO,
+                   ValidationMode (FullValidation), conwayEraOnwardsToShelleyBasedEra,
+                   foldEpochState, runExceptT, shelleyBasedEraConstraints)
 import qualified Cardano.Api as Api
 import           Cardano.Api.Ledger (GovActionId (..))
 import qualified Cardano.Api.Ledger as L
@@ -58,11 +58,13 @@ findCondition epochStateFoldFunc configurationFile socketPath maxEpochNo = withF
         Just x -> put (Just x) >> pure ConditionMet
         Nothing -> pure ConditionNotMet
 
-maybeExtractGovernanceActionIndex :: ShelleyBasedEra ConwayEra -- ^ The era in which the test runs
+maybeExtractGovernanceActionIndex :: ()
+  => ConwayEraOnwards ConwayEra -- ^ The era in which the test runs
   -> Api.TxId
   -> AnyNewEpochState
   -> Maybe Word32
-maybeExtractGovernanceActionIndex sbe txid (AnyNewEpochState actualEra newEpochState) =
+maybeExtractGovernanceActionIndex ceo txid (AnyNewEpochState actualEra newEpochState) =
+  let sbe = conwayEraOnwardsToShelleyBasedEra ceo in
   case testEquality sbe actualEra of
           Just Refl -> do
             let proposals = shelleyBasedEraConstraints sbe newEpochState

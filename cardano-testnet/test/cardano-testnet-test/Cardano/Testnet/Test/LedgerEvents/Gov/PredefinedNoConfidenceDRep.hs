@@ -302,7 +302,7 @@ makeUpdateConstitutionalCommitteeProposal execConfig epochStateView configuratio
 
   governanceActionTxId <- retrieveTransactionId execConfig signedProposalTx
 
-  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex sbe (fromString governanceActionTxId))
+  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex ceo (fromString governanceActionTxId))
                                         (unFile configurationFile)
                                         (unFile socketPath)
                                         (EpochNo 10)
@@ -441,7 +441,7 @@ makeNoConfidenceProposal execConfig epochStateView configurationFile socketPath
 
   governanceActionTxId <- retrieveTransactionId execConfig signedProposalTx
 
-  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex sbe (fromString governanceActionTxId))
+  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex ceo (fromString governanceActionTxId))
                                         (unFile configurationFile)
                                         (unFile socketPath)
                                         (EpochNo 30)

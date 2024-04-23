@@ -172,7 +172,7 @@ hprop_ledger_events_propose_new_constitution = H.integrationWorkspace "propose-n
 
   governanceActionTxId <- retrieveTransactionId execConfig signedProposalTx
 
-  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex sbe (fromString governanceActionTxId))
+  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex ceo (fromString governanceActionTxId))
                                         configurationFile
                                         socketPath
                                         (EpochNo 10)
@@ -205,7 +205,7 @@ hprop_ledger_events_propose_new_constitution = H.integrationWorkspace "propose-n
                       (File configurationFile)
                       (File socketPath)
                       FullValidation
-                      (EpochNo 10)
+                      (EpochNo 30)
                       ()
                       (\epochState _ _ -> foldBlocksCheckConstitutionWasRatified constitutionHash constitutionScriptHash epochState)
 

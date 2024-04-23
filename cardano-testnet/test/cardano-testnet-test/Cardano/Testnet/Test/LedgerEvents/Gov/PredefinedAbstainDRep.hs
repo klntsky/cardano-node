@@ -28,6 +28,7 @@ import           Prelude
 
 import           Control.Monad (void)
 import           Control.Monad.Catch (MonadCatch)
+import           Data.Data (Typeable)
 import           Data.String (fromString)
 import qualified Data.Text as Text
 import           Data.Word (Word32)
@@ -316,7 +317,7 @@ makeDesiredPoolNumberChangeProposal execConfig epochStateView configurationFile 
 
   (EpochNo curEpoch) <- getCurrentEpochNo epochStateView
 
-  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex sbe (fromString governanceActionTxId))
+  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex ceo (fromString governanceActionTxId))
                                         (unFile configurationFile)
                                         (unFile socketPath)
                                         (EpochNo $ curEpoch + 10)
@@ -342,11 +343,10 @@ type DefaultSPOVote = (String, Int)
 -- | Create and issue votes for (or against) a government proposal with default
 -- Delegate Representative (DReps created by 'cardanoTestnetDefault') and
 -- default Stake Pool Operatorsusing using @cardano-cli@.
-voteChangeProposal :: (MonadTest m, MonadIO m, MonadCatch m, H.MonadAssertion m)
+voteChangeProposal :: (Typeable era, MonadTest m, MonadIO m, MonadCatch m, H.MonadAssertion m)
   => H.ExecConfig -- ^ Specifies the CLI execution configuration.
   -> EpochStateView -- ^ Current epoch state view for transaction building. It can be obtained
-                    -- using the 'getEpochStateView' function.
-  -> ConwayEraOnwards ConwayEra -- ^ The @ConwayEraOnwards@ witness for the Conway era.
+  -> ConwayEraOnwards era -- ^ The @ConwayEraOnwards@ witness for the current era.
   -> FilePath -- ^ Base directory path where the subdirectory with the intermediate files will be created.
   -> String -- ^ Name for the subdirectory that will be created for storing the intermediate files.
   -> String -- ^ Transaction id of the governance action to vote.
