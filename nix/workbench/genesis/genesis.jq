@@ -28,7 +28,7 @@ def profile_cli_args($p):
      , "--delegated-supply",       fmt_decimal_10_5($p.derived.supply_delegated)
      , "--pools",                  $p.composition.n_pools
      , "--stake-delegators",       $p.derived.delegators_effective
-     , "--transient-drep-keys",    $p.genesis.drep_delegators
+     , "--drep-keys",              $p.genesis.dreps
      , "--stuffed-utxo",           fmt_decimal_10_5($p.derived.utxo_stuffed)
      ])
   , pools:
@@ -65,6 +65,7 @@ def profile_genesis_cache_key($p; $profile_file):
 
   , delegators
   , utxo_stuffed
+  , dreps
 
   } as $genesis_crypto_affecting_data
 
@@ -86,6 +87,7 @@ then [ "k\(.composition.n_pools)" ]
      [ "d\(.composition.dense_pool_density)" ] end
      +
      [ "\(.genesis.delegators / 1000)kD"
+     , "\(.genesis.dreps)Dr"
      , "\(.derived.utxo_stuffed / 1000)kU"
      , "\($params_hash)" ]
 else [ "preset"
