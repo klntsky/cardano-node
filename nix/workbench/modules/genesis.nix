@@ -118,6 +118,12 @@ in
         type = types.ints.unsigned;
       };
 
+      dreps = mkOptions {
+        description = "The number of Delegated Representatives (DReps)";
+        type = types.ints.unsigned;
+        default = 0;
+      };
+
       pool_coin = mkOption {
         # Only needed for genesis creation, to be removed from profile
         description = "pool_coin";
@@ -306,7 +312,7 @@ in
         "--delegated-supply ${toString derived.supply_delegated}"
         "--pools ${toString composition.n_pools}"
         "--stake-delegators ${toString derived.delegators_effective}"
-        "--transient-drep-keys ${toString genesis.drep_delegators}"
+        "--drep-keys ${toString genesis.dreps}"
         "--stuffed-utxo ${toString derived.utxo_stuffed}"
         "--testnet-magic ${toString genesis.network_magic}"
       ];
@@ -332,8 +338,9 @@ in
         concatStringsSep "-"
           ([ "k${toString composition.n_pools}" ]
             ++ optional (composition.dense_pool_density != 1) "d${toString composition.dense_pool_density}"
+            ++ [ "${toString (genesis.delegators / 1000)}kD" ]
+            ++ optional (genesis.dreps != 0) [ "${toString genesis.dreps}Dr" ]
             ++ [
-            "${toString (genesis.delegators / 1000)}kD"
             "${toString (derived.utxo_stuffed / 1000)}kU"
             (substring 0 7 (builtins.hashString "sha1" (builtins.toJSON genesis.cache-key-input)))
           ]);
