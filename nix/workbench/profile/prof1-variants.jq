@@ -623,7 +623,7 @@ def all_profile_variants:
     { desc: "Miniature dataset, CI-friendly duration, test scale"
     }) as $citest_base
   |
-   ($scenario_fixed_loaded * $doublet * $dataset_miniature * $for_15blk * $no_filtering *
+   ($scenario_fixed_loaded * $doublet * $dataset_miniature * $for_15blk * $no_filtering * $dreps_small *
     { desc: "Miniature dataset, CI-friendly duration, bench scale"
     }) as $cibench_base
   |
@@ -973,11 +973,6 @@ def all_profile_variants:
     { name: "ci-bench-nomadperf-nop2p"
     , desc: "ci-bench on P&T exclusive cluster with P2P disabled"
     }
-  ## DREP
-  , $cibench_base * $dreps_small *
-    { name: "ci-bench-drep"
-    }
-  ## DREP
 
   ## CI variants: test duration, 3 blocks, dense10
   , $citest_base * $solo_dense10 *
