@@ -620,6 +620,9 @@ genesis-create-staked() {
     info genesis "removing delegator keys."
     rm "$dir"/stake-delegator-keys -rf
 
+    info genesis "removing dreps keys."
+    rm "$dir"/drep-keys -rf
+
     info genesis "moving keys"
     Massage_the_key_file_layout_to_match_AWS "$profile_json" "$node_specs" "$dir"
 }
@@ -693,6 +696,9 @@ genesis-create-testnet-data() {
 
     info genesis "removing delegator keys."
     rm "$dir/stake-delegators" -rf
+
+    info genesis "removing dreps keys."
+    rm "$dir"/drep-keys -rf
 
     info genesis "moving keys"
     Massage_the_key_file_layout_to_match_AWS "$profile_json" "$node_specs" "$dir"
