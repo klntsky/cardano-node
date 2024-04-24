@@ -86,9 +86,11 @@ then [ "k\(.composition.n_pools)" ]
      else
      [ "d\(.composition.dense_pool_density)" ] end
      +
-     [ "\(.genesis.delegators / 1000)kD"
-     , "\(.genesis.dreps)Dr"
-     , "\(.derived.utxo_stuffed / 1000)kU"
+     [ "\(.genesis.delegators / 1000)kD" ]
+     +
+     if .genesis.dreps != 0 then ["\(.genesis.dreps)Dr"] else [] end
+     +
+     [ "\(.derived.utxo_stuffed / 1000)kU"
      , "\($params_hash)" ]
 else [ "preset"
      , $profile[0].preset ]
