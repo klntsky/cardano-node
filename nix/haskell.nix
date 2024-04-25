@@ -48,6 +48,7 @@ let
           ghcid
           haskell-language-server
           cabal
+          shellcheck
         ];
 
         withHoogle = true;
