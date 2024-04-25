@@ -8,6 +8,7 @@ module Cardano.Node.Tracing.Tracers.NodeVersion
 (
     NodeVersionTrace (..)
   , getNodeVersion
+  , getCardanoBuildInfo
 )
  where
 

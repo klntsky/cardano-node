@@ -74,6 +74,8 @@ import           Paths_cardano_node (version)
 
 import qualified Cardano.Crypto.Init as Crypto
 
+import           Cardano.Node.Tracing.Tracers.NodeVersion (getNodeVersion)
+
 import           Cardano.Node.Configuration.Logging (LoggingLayer (..), createLoggingLayer,
                    nodeBasicInfo, shutdownLoggingLayer)
 import           Cardano.Node.Configuration.NodeAddress
@@ -278,6 +280,9 @@ handleNodeWithTracers cmdPc nc0 p networkMagic blockType runP = do
 
           getStartupInfo nc p fp
             >>= mapM_ (traceWith $ startupTracer tracers)
+
+          traceWith (nodeVersionTracer tracers) getNodeVersion
+
 
           blockForging <- snd (Api.protocolInfo runP)
           traceWith (startupTracer tracers)

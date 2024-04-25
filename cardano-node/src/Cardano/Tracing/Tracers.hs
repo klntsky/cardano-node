@@ -44,6 +44,8 @@ import qualified Cardano.Node.STM as STM
 import           Cardano.Node.Startup
 
 import           Cardano.Node.TraceConstraints
+import           Cardano.Node.Tracing.Tracers.NodeVersion
+
 import           Cardano.Node.Tracing
 import           Cardano.Protocol.TPraos.OCert (KESPeriod (..))
 import           Cardano.Slotting.Slot (EpochNo (..), SlotNo (..), WithOrigin (..))
@@ -343,11 +345,11 @@ mkTracers blockConfig tOpts@(TracingOnLegacy trSel) tr nodeKern ekgDirect enable
               <> Tracer (\(ev :: StartupTrace blk) -> traceForgeEnabledMetric ekgDirect ev)
 
     , shutdownTracer = toLogObject' verb $ appendName "shutdown" tr
+    , nodeVersionTracer = Tracer (\(ev :: NodeVersionTrace) -> traceVersionMetric ekgDirect ev)
     -- The remaining tracers are completely unused by the legacy tracing:
     , nodeInfoTracer = nullTracer
     , nodeStartupInfoTracer = nullTracer
     , nodeStateTracer = nullTracer
-    , nodeVersionTracer = nullTracer
     , resourcesTracer = nullTracer
     , peersTracer = nullTracer
     }
@@ -364,6 +366,18 @@ mkTracers blockConfig tOpts@(TracingOnLegacy trSel) tr nodeKern ekgDirect enable
                                             NotEffective -> 0 :: Int)
               _ -> pure ()
         Nothing -> pure ()
+   traceVersionMetric :: Maybe EKGDirect -> NodeVersionTrace -> IO ()
+   traceVersionMetric mbEKGDirect ev =
+      case mbEKGDirect of
+        Just ekgDirect' ->
+          case ev of
+              NodeVersionTrace {} ->
+                  sendEKGDirectPrometheusLabel
+                    ekgDirect'
+                    "cardano_build_info"
+                    (getCardanoBuildInfo ev)
+        Nothing -> pure ()
+
 
    diffusionTracers = Diffusion.Tracers
      { Diffusion.dtMuxTracer                     = muxTracer
@@ -660,6 +674,28 @@ sendEKGDirectDouble ekgDirect name val = do
         label <- EKG.getLabel name (ekgServer ekgDirect)
         Label.set label (Text.pack (show val))
         pure $ Map.insert name label registeredMap
+
+sendEKGDirectPrometheusLabel :: EKGDirect -> Text -> [(Text,Text)] -> IO ()
+sendEKGDirectPrometheusLabel ekgDirect name labels = do
+  modifyMVar_ (ekgLabels ekgDirect) $ \registeredMap -> do
+    case Map.lookup name registeredMap of
+      Just label -> do
+        Label.set label (presentPrometheusM labels)
+        pure registeredMap
+      Nothing -> do
+        label <- EKG.getLabel name (ekgServer ekgDirect)
+        Label.set label (presentPrometheusM labels)
+        pure $ Map.insert name label registeredMap
+  where
+    presentPrometheusM :: [(Text, Text)] -> Text
+    presentPrometheusM =
+      label . map pair
+      where
+        label pairs = "{" <> Text.intercalate "," pairs <> "} 1"
+        pair (k, v) = k <> "=\"" <> v <> "\""
+
+
+
 
 --------------------------------------------------------------------------------
 -- Consensus Tracers
