@@ -13,7 +13,8 @@ import           Control.Concurrent.MVar
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Control.Tracer as T
 import qualified Data.Map.Strict as Map
-import           Data.Text (Text, pack)
+import           Data.Text (Text, intercalate, pack)
+
 import qualified System.Metrics as Metrics
 import qualified System.Metrics.Counter as Counter
 import qualified System.Metrics.Gauge as Gauge
@@ -91,7 +92,9 @@ ekgTracer storeOrServer = liftIO $ do
             pure (rgsMap', gauge)
 
 presentPrometheusM :: [(Text, Text)] -> Text
-presentPrometheusM labels = "{" <> foldr (\(k, v) acc -> k <> "=\"" <> v <>
-                                    (if k == fst (last labels)
-                                      then "\" " <> acc
-                                      else "\", " <> acc)) "" labels <> "} 1"
+presentPrometheusM =
+  label . map pair
+  where
+    label pairs = "{" <> intercalate "," pairs <> "} 1"
+    pair (k, v) = k <> "=\"" <> v <> "\""
+
