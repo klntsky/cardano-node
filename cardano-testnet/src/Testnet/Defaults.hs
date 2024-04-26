@@ -76,6 +76,7 @@ import           Numeric.Natural
 import           System.FilePath ((</>))
 
 import           Test.Cardano.Ledger.Core.Rational
+import           Test.Cardano.Ledger.Plutus (testingCostModelV3)
 import           Testnet.Runtime (PaymentKeyPair (PaymentKeyPair), PoolNodeKeys (..),
                    SPOColdKeyPair (..), StakingKeyPair (StakingKeyPair))
 import           Testnet.Start.Types
@@ -129,6 +130,7 @@ defaultConwayGenesis =
                     , ucppDRepDeposit = Coin 1_000_000
                     , ucppDRepActivity = EpochInterval 100
                     , ucppMinFeeRefScriptCostPerByte = 0 %! 1 -- FIXME GARBAGE VALUE
+                    , ucppPlutusV3CostModel = testingCostModelV3
                     }
       drepVotingThresholds = DRepVotingThresholds
         { dvtMotionNoConfidence = 0 %! 1
