@@ -211,7 +211,6 @@ EOF
             compute-multi-clusterperf
             multi-clusterperf-json
             multi-clusterperf-gnuplot
-            multi-clusterperf-latex
             multi-clusterperf-org
             multi-clusterperf-report
             multi-clusterperf-full
@@ -219,7 +218,6 @@ EOF
             read-propagations
             compute-multi-propagation
             multi-propagation-json
-            multi-propagation-latex
             multi-propagation-org
             multi-propagation-{control,forger,peers,endtoend}
             multi-propagation-gnuplot
@@ -228,7 +226,6 @@ EOF
             read-summaries
             compute-multi-summary
             multi-summary-json
-            multi-summary-latex
             multi-summary-report
             write-context
         )
@@ -258,7 +255,6 @@ EOF
             compute-propagation
             propagation-gnuplot
             propagation-json
-            propagation-latex
             propagation-org
             propagation-{control,forger,peers,endtoend}
             propagation-full
@@ -269,14 +265,12 @@ EOF
             compute-clusterperf
             clusterperf-gnuplot
             clusterperf-json
-            clusterperf-latex
             clusterperf-org
             clusterperf-report
             clusterperf-full
 
             compute-summary
             summary-json
-            summary-latex
             summary-report
          )
         verbose "analyse" "$(white full), calling script:  $(colorise ${script[*]})"
@@ -303,7 +297,6 @@ EOF
             compute-propagation
             propagation-gnuplot
             propagation-json
-            propagation-latex
             propagation-org
             propagation-{control,forger,peers,endtoend}
             propagation-full
@@ -327,7 +320,6 @@ EOF
             compute-clusterperf
             clusterperf-json
             clusterperf-gnuplot
-            clusterperf-latex
             clusterperf-org
             clusterperf-report
             clusterperf-full
