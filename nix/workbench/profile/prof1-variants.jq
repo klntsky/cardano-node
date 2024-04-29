@@ -1039,6 +1039,9 @@ def all_profile_variants:
   , $nomad_perf_base * $nomad_perf_dense * $p2p * $costmodel_v8_preview *
     { name: "value-nomadperf"
     }
+  , $nomad_perf_base * $nomad_perf_dense * $p2p * $costmodel_v8_preview * $dreps_large *
+    { name: "value-nomadperf-drep1k"
+    }
   , $nomad_perfssd_base * $nomad_perfssd_dense * $p2p * $costmodel_v8_preview *
     { name: "value-nomadperfssd"
     }
@@ -1047,6 +1050,9 @@ def all_profile_variants:
     }
   , $nomad_perf_plutus_base * $nomad_perf_dense * $p2p * $costmodel_v8_preview *
     { name: "plutus-nomadperf"
+    }
+  , $nomad_perf_plutus_base * $nomad_perf_dense * $p2p * $costmodel_v8_preview * $dreps_large *
+    { name: "plutus-nomadperf-drep1k"
     }
   , $nomad_perf_latency_base * $nomad_perf_dense * $p2p * $costmodel_v8_preview *
     { name: "latency-nomadperf"
