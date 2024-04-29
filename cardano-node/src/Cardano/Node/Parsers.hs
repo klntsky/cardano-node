@@ -1,7 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Cardano.Node.Parsers
   ( nodeCLIParser
@@ -20,17 +19,11 @@ import           Cardano.Node.Configuration.Socket
 import           Cardano.Node.Handlers.Shutdown
 import           Cardano.Node.Types
 import           Cardano.Prelude (ConvertText (..))
-import           Ouroboros.Consensus.Mempool (MempoolCapacityBytes (..),
-                   MempoolCapacityBytesOverride (..))
-import           Ouroboros.Consensus.Storage.LedgerDB.DiskPolicy (NumOfDiskSnapshots (..),
-                   SnapshotInterval (..))
 
 import           Data.Foldable
 import           Data.Maybe (fromMaybe)
 import           Data.Monoid (Last (..))
 import           Data.Text (Text)
-import           Data.Time.Clock (secondsToDiffTime)
-import           Data.Word (Word32)
 import           Options.Applicative hiding (str)
 import qualified Options.Applicative as Opt
 import qualified Options.Applicative.Help as OptI
@@ -70,14 +63,10 @@ nodeRunParser = do
 
   -- NodeConfiguration filepath
   nodeConfigFp <- lastOption parseConfigFile
-  numOfDiskSnapshots <- lastOption parseNumOfDiskSnapshots
-  snapshotInterval   <- lastOption parseSnapshotInterval
 
   validate <- lastOption parseValidateDB
   shutdownIPC <- lastOption parseShutdownIPC
   shutdownOnLimit <- lastOption parseShutdownOn
-
-  maybeMempoolCapacityOverride <- lastOption parseMempoolCapacityOverride
 
   pure $ PartialNodeConfiguration
            { pncSocketConfig =
@@ -90,8 +79,8 @@ nodeRunParser = do
            , pncTopologyFile = TopologyFile <$> topFp
            , pncDatabaseFile = DbFile <$> dbFp
            , pncDiffusionMode = mempty
-           , pncNumOfDiskSnapshots = numOfDiskSnapshots
-           , pncSnapshotInterval = snapshotInterval
+           , pncNumOfDiskSnapshots = mempty
+           , pncSnapshotInterval = mempty
            , pncExperimentalProtocolsEnabled = mempty
            , pncProtocolFiles = Last $ Just ProtocolFilepaths
              { byronCertFile
@@ -112,7 +101,7 @@ nodeRunParser = do
            , pncLogMetrics = mempty
            , pncTraceConfig = mempty
            , pncTraceForwardSocket = traceForwardSocket
-           , pncMaybeMempoolCapacityOverride = maybeMempoolCapacityOverride
+           , pncMaybeMempoolCapacityOverride = mempty
            , pncProtocolIdleTimeout = mempty
            , pncTimeWaitTimeout = mempty
            , pncChainSyncIdleTimeout = mempty
@@ -205,24 +194,6 @@ parseConfigFile =
     <> help "Configuration file for the cardano-node"
     <> completer (bashCompleter "file")
     )
-
-parseMempoolCapacityOverride :: Parser MempoolCapacityBytesOverride
-parseMempoolCapacityOverride = parseOverride <|> parseNoOverride
-  where
-    parseOverride :: Parser MempoolCapacityBytesOverride
-    parseOverride =
-      MempoolCapacityBytesOverride . MempoolCapacityBytes <$>
-      Opt.option (auto @Word32)
-        (  long "mempool-capacity-override"
-        <> metavar "BYTES"
-        <> help "The number of bytes"
-        )
-    parseNoOverride :: Parser MempoolCapacityBytesOverride
-    parseNoOverride =
-      flag' NoMempoolCapacityBytesOverride
-        (  long "no-mempool-capacity-override"
-        <> help "The port number"
-        )
 
 parseDbPath :: Parser FilePath
 parseDbPath =
@@ -329,25 +300,6 @@ parseStartAsNonProducingNode =
         , "credentials are specified."
         ]
     ]
-
-parseNumOfDiskSnapshots :: Parser NumOfDiskSnapshots
-parseNumOfDiskSnapshots = fmap RequestedNumOfDiskSnapshots parseNum
-  where
-  parseNum = Opt.option auto
-    ( long "num-of-disk-snapshots"
-        <> metavar "NUMOFDISKSNAPSHOTS"
-        <> help "Number of ledger snapshots stored on disk."
-    )
-
--- TODO revisit because it sucks
-parseSnapshotInterval :: Parser SnapshotInterval
-parseSnapshotInterval = fmap (RequestedSnapshotInterval . secondsToDiffTime) parseDifftime
-  where
-  parseDifftime = Opt.option auto
-    ( long "snapshot-interval"
-        <> metavar "SNAPSHOTINTERVAL"
-        <> help "Snapshot Interval (in seconds)"
-    )
 
 -- | Produce just the brief help header for a given CLI option parser,
 --   without the options.
