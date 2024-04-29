@@ -257,15 +257,23 @@ start() {
        progress "top-level | analysis" "analysis type $(with_color yellow "$analysis_type") on $(with_color white "$run")"
 
        local runspec
-       runspec=$(test -n "$ident" && echo "$ident":)$run
+       if test -n "$ident"; then
+         runspec="$ident":$run
+       else
+         runspec=$run
+       fi
 
-       analyse "${analyse_args[@]}" "$analysis_type" "$runspec" &&
-           progress "run | analysis" "done for $(white "$runspec")" ||
-           if test -n "$analysis_can_fail" -a -z "$no_retry_failed_runs"
-           then progress "run | analysis" "log processing failed, but --analysis-can-fail prevents failure:  $(with_color red "$runspec")"
-                iterations=$((iterations + 1))
-           else fail "analysis failed:  $run"
-                false; fi
+       if analyse "${analyse_args[@]}" "$analysis_type" "$runspec"; then
+         progress "run | analysis" "done for $(white "$runspec")"
+       else
+         if test -n "$analysis_can_fail" -a -z "$no_retry_failed_runs"; then
+           progress "run | analysis" "log processing failed, but --analysis-can-fail prevents failure:  $(with_color red "$runspec")"
+           iterations=$((iterations + 1))
+         else
+           fail "analysis failed:  $run"
+           false
+         fi
+       fi
     done
 
     if test -z "$no_analysis" -a "$analysis_type" != null -a "$iterations" -gt 1
