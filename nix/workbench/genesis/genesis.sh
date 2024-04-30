@@ -224,9 +224,9 @@ case "$op" in
         ln -s "$cache_entry"/cache.key.input      "$outdir"
         ln -s "$cache_entry"/layout.version       "$outdir"
 
-        ## keys
-        ln -s "$cache_entry"/delegate-keys        "$outdir"
-        ln -s "$cache_entry"/genesis-keys         "$outdir"
+        # create-testnet-data does not create these directories if there are no keys in them
+        [[ -d "$dir"/delegate-keys ]] && ln -s "$cache_entry"/delegate-keys "$outdir"
+        [[ -d "$dir"/genesis-keys  ]] && ln -s "$cache_entry"/genesis-keys  "$outdir"
 
         cp -a "$cache_entry"/node-keys            "$outdir"
         chmod -R go-rwx                           "$outdir"/node-keys
