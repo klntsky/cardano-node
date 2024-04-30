@@ -546,13 +546,13 @@ defaultSPOKeys n =
 
 -- | The relative path to stake delegator stake keys in directories created by cardano-testnet
 defaultDelegatorStakeVkeyFp
-  :: Int -- ^The Stake delegator index (starts at 1)
+  :: Int -- ^ The Stake delegator index (starts at 1)
   -> FilePath
 defaultDelegatorStakeVkeyFp n = "stake-delegators" </> ("delegator" <> show n) </> "staking.vkey"
 
 -- | The relative path to stake delegator stake secret keys in directories created by cardano-testnet
 defaultDelegatorStakeSkeyFp
-  :: Int -- ^The Stake delegator index (starts at 1)
+  :: Int -- ^ The Stake delegator index (starts at 1)
   -> FilePath
 defaultDelegatorStakeSkeyFp n = "stake-delegators" </> ("delegator" <> show n) </> "staking.skey"
 
