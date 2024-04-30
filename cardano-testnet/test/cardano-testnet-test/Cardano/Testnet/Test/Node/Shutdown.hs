@@ -59,7 +59,7 @@ import qualified Hedgehog.Extras.Test.Process as H
 --
 -- TODO: Use cardanoTestnet in hprop_shutdown
 hprop_shutdown :: Property
-hprop_shutdown = H.integrationRetryWorkspace 2 "shutdown" $ \tempAbsBasePath' -> runWithDefaultWatchdog_ $ do
+hprop_shutdown = H.integrationRetryWorkspace 0 "shutdown" $ \tempAbsBasePath' -> runWithDefaultWatchdog_ $ do
   conf <- mkConf tempAbsBasePath'
   let tempBaseAbsPath' = makeTmpBaseAbsPath $ tempAbsPath conf
       tempAbsPath' = unTmpAbsPath $ tempAbsPath conf
@@ -184,7 +184,7 @@ hprop_shutdown = H.integrationRetryWorkspace 2 "shutdown" $ \tempAbsBasePath' ->
 
 
 hprop_shutdownOnSlotSynced :: Property
-hprop_shutdownOnSlotSynced = H.integrationRetryWorkspace 2 "shutdown-on-slot-synced" $ \tempAbsBasePath' -> runWithDefaultWatchdog_ $ do
+hprop_shutdownOnSlotSynced = H.integrationRetryWorkspace 0 "shutdown-on-slot-synced" $ \tempAbsBasePath' -> runWithDefaultWatchdog_ $ do
   -- Start a local test net
   -- TODO: Move yaml filepath specification into individual node options
   conf <- mkConf tempAbsBasePath'
@@ -233,7 +233,7 @@ hprop_shutdownOnSlotSynced = H.integrationRetryWorkspace 2 "shutdown-on-slot-syn
 -- Execute this test with:
 -- @DISABLE_RETRIES=1 cabal test cardano-testnet-test --test-options '-p "/ShutdownOnSigint/"'@
 hprop_shutdownOnSigint :: Property
-hprop_shutdownOnSigint = H.integrationRetryWorkspace 2 "shutdown-on-sigint" $ \tempAbsBasePath' -> runWithDefaultWatchdog_ $ do
+hprop_shutdownOnSigint = H.integrationRetryWorkspace 0 "shutdown-on-sigint" $ \tempAbsBasePath' -> runWithDefaultWatchdog_ $ do
   -- Start a local test net
   -- TODO: Move yaml filepath specification into individual node options
   conf <- mkConf tempAbsBasePath'

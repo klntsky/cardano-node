@@ -25,7 +25,7 @@ import qualified Hedgehog.Extras.Test.Process as H
 import qualified Test.Base as H
 
 testnetProperty :: (H.Conf -> H.Integration ()) -> H.Property
-testnetProperty tn = H.integrationRetryWorkspace 2 "testnet-chairman" $ \tempAbsPath' -> do
+testnetProperty tn = H.integrationRetryWorkspace 0 "testnet-chairman" $ \tempAbsPath' -> do
   base <- H.note =<< H.noteIO . IO.canonicalizePath =<< H.getProjectBase
   configurationTemplate <- H.noteShow $ base </> "configuration/defaults/byron-mainnet/configuration.yaml"
   conf <- H.mkConf tempAbsPath'
