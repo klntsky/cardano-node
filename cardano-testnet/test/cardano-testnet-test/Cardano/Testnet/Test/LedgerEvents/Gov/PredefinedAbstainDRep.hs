@@ -132,6 +132,7 @@ hprop_check_predefined_abstain_drep = H.integrationWorkspace "test-activity" $ \
   void $ desiredPoolNumberProposalTest execConfig epochStateView configurationFile socketPath ceo gov "secondProposal"
                                        wallet0 Nothing [(1, "yes")] newNumberOfDesiredPools2 0 (Just newNumberOfDesiredPools2) 10
 
+-- | Delegates a staking key pair to the "always abstain" automated DRep
 delegateToAlwaysAbstain
   :: (HasCallStack, MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m)
   => H.ExecConfig -- ^ Specifies the CLI execution configuration.
@@ -149,18 +150,20 @@ delegateToAlwaysAbstain execConfig epochStateView configurationFile socketPath s
   delegateToAutomaticDRep execConfig epochStateView configurationFile socketPath sbe work prefix
                           "--always-abstain"
 
+-- | Delegates to a staking key pair with the delegation preference set to automatic.
 delegateToAutomaticDRep
   :: (HasCallStack, MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m)
-  => H.ExecConfig
-  -> EpochStateView
-  -> FilePath
-  -> FilePath
-  -> ShelleyBasedEra ConwayEra
-  -> FilePath
-  -> String
-  -> String
-  -> PaymentKeyInfo
-  -> StakingKeyPair
+  => H.ExecConfig -- ^ Specifies the CLI execution configuration.
+  -> EpochStateView -- ^ Current epoch state view for transaction building. It can be obtained
+                    -- using the 'getEpochStateView' function.
+  -> FilePath -- ^ Path to the node configuration file as returned by 'cardanoTestnetDefault'.
+  -> FilePath -- ^ Path to the cardano-node unix socket file.
+  -> ShelleyBasedEra ConwayEra -- ^ The Shelley-based era (e.g., 'ConwayEra') in which the transaction will be constructed.
+  -> FilePath -- ^ Base directory path where generated files will be stored.
+  -> String -- ^ Name for the subfolder that will be created under 'work' folder.
+  -> String -- ^ Additional command-line arguments for the delegation.
+  -> PaymentKeyInfo -- ^ Wallet that will pay for the transaction.
+  -> StakingKeyPair -- ^ Staking key pair used for delegation.
   -> m ()
 delegateToAutomaticDRep execConfig epochStateView configurationFile socketPath sbe work prefix
                         flag payingWallet skeyPair@(StakingKeyPair vKeyFile _sKeyFile) = do
