@@ -224,7 +224,7 @@ updateConstitutionalCommittee execConfig epochStateView configurationFile socket
   return thisProposal
 
 makeUpdateConstitutionalCommitteeProposal
-  :: (H.MonadAssertion m, MonadTest m, MonadCatch m, MonadIO m, Foldable f)
+  :: (HasCallStack, H.MonadAssertion m, MonadTest m, MonadCatch m, MonadIO m, Foldable f)
   => H.ExecConfig
   -> EpochStateView
   -> NodeConfigFile 'In
