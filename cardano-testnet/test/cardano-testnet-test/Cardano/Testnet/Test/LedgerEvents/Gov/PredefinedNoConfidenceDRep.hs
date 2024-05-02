@@ -18,8 +18,8 @@ import qualified Cardano.Ledger.Conway.Governance as L
 import qualified Cardano.Ledger.Shelley.LedgerState as L
 import           Cardano.Testnet
 import           Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedAbstainDRep
-                   (desiredPoolNumberProposalTest,
-                   getDesiredPoolNumberValue, voteChangeProposal, delegateToAutomaticDRep, AutomaticDRepType (..))
+                   (AutomaticDRepType (..), delegateToAutomaticDRep, desiredPoolNumberProposalTest,
+                   getDesiredPoolNumberValue, voteChangeProposal)
 
 import           Prelude
 
@@ -30,7 +30,7 @@ import qualified Data.Map as Map
 import           Data.String (fromString)
 import qualified Data.Text as Text
 import           Data.Word (Word32)
-import           GHC.Stack (callStack, HasCallStack)
+import           GHC.Stack (HasCallStack, callStack)
 import           Lens.Micro ((^.))
 import           System.FilePath ((</>))
 
