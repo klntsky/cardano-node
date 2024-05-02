@@ -317,7 +317,7 @@ makeUpdateConstitutionalCommitteeProposal execConfig epochStateView configuratio
 
   return (governanceActionTxId, governanceActionIndex)
 
--- | Delegate to a staking key pair with the delegation preference set to always no confidence.
+-- | Delegate a staking key pair to the automated no confidence DRep.
 delegateToAlwaysNoConfidence
   :: (MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m, HasCallStack)
   => H.ExecConfig -- ^ Specifies the CLI execution configuration.
@@ -335,19 +335,24 @@ delegateToAlwaysNoConfidence execConfig epochStateView configurationFile socketP
   delegateToAutomaticDRep execConfig epochStateView configurationFile socketPath sbe work prefix
                           "--always-no-confidence"
 
+-- Run a no confidence motion and check the result. Vote "yes" with 3 SPOs. Check the no
+-- confidence motion passes.
 testNoConfidenceProposal
   :: (MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m, Foldable t, HasCallStack)
-  => H.ExecConfig
-  -> EpochStateView
-  -> FilePath
-  -> FilePath
-  -> ConwayEraOnwards ConwayEra
-  -> FilePath
-  -> FilePath
-  -> PaymentKeyInfo
-  -> (String, Word32)
-  -> t (Int, String)
-  -> Integer
+  => H.ExecConfig -- ^ Specifies the CLI execution configuration.
+  -> EpochStateView -- ^ Current epoch state view for transaction building. It can be obtained
+                    -- using the 'getEpochStateView' function.
+  -> FilePath -- ^ Path to the node configuration file as returned by 'cardanoTestnetDefault'.
+  -> FilePath -- ^ Path to the cardano-node unix socket file.
+  -> ConwayEraOnwards ConwayEra -- ^ The Shelley based era witness for ConwayEra onwards.
+  -> FilePath -- ^ Base directory path where generated files will be stored.
+  -> String -- ^ Name for the subfolder that will be created under 'work' folder.
+  -> PaymentKeyInfo -- ^ Wallet that will pay for the transaction.
+  -> (String, Word32) -- ^ Tuple containing the preivous proposal transaction id and index.
+  -> t (Int, String) -- ^ Model of DRep votes for proposal, list of pairs with an amount
+                     -- of votes and the and type of vote (i.e: "yes", "no", or "abstain").
+  -> Integer -- ^ Epoch till which to wait before checking the result of the no
+             -- confidence proposal passes.
   -> m (String, Word32)
 testNoConfidenceProposal execConfig epochStateView configurationFile socketPath ceo work prefix
                          wallet previousProposalInfo votes waitTillEpoch = do
