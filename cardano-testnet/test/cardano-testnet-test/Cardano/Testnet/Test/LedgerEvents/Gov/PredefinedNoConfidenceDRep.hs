@@ -18,8 +18,8 @@ import qualified Cardano.Ledger.Conway.Governance as L
 import qualified Cardano.Ledger.Shelley.LedgerState as L
 import           Cardano.Testnet
 import           Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedAbstainDRep
-                   (delegateToAutomaticDRep, desiredPoolNumberProposalTest,
-                   getDesiredPoolNumberValue, voteChangeProposal)
+                   (desiredPoolNumberProposalTest,
+                   getDesiredPoolNumberValue, voteChangeProposal, delegateToAutomaticDRep, AutomaticDRepFlag (..))
 
 import           Prelude
 
@@ -109,11 +109,11 @@ hprop_check_predefined_no_confidence_drep = H.integrationWorkspace "test-activit
   firstProposalInfo <- desiredPoolNumberProposalTest execConfig epochStateView configurationFile socketPath ceo gov "firstProposal"
                                                      wallet1 Nothing [(3, "yes")] newNumberOfDesiredPools 0 (Just newNumberOfDesiredPools) 10
 
-  -- Take the last two stake delegators and delegate them to "No Confidence".
-  delegateToAlwaysNoConfidence execConfig epochStateView configurationFile socketPath sbe gov "delegateToNoConfidence1"
-                               wallet2 (defaultDelegatorStakeKeyPair 2)
-  delegateToAlwaysNoConfidence execConfig epochStateView configurationFile socketPath sbe gov "delegateToNoConfidence2"
-                               wallet2 (defaultDelegatorStakeKeyPair 3)
+  -- Take the last two stake delegators and delegate them to "No Confidence" automatic DRep.
+  delegateToAutomaticDRep execConfig epochStateView configurationFile socketPath sbe work
+                          "delegateToNoConfidence1" NoConfidenceDRep wallet2 (defaultDelegatorStakeKeyPair 2)
+  delegateToAutomaticDRep execConfig epochStateView configurationFile socketPath sbe work
+                          "delegateToNoConfidence2" NoConfidenceDRep wallet2 (defaultDelegatorStakeKeyPair 3)
 
   -- Do some other proposal and vote yes with all the DReps
   -- and assert the new proposal does NOT pass.
@@ -316,24 +316,6 @@ makeUpdateConstitutionalCommitteeProposal execConfig epochStateView configuratio
                              Right (Just a) -> return a
 
   return (governanceActionTxId, governanceActionIndex)
-
--- | Delegate a staking key pair to the automated no confidence DRep.
-delegateToAlwaysNoConfidence
-  :: (MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m, HasCallStack)
-  => H.ExecConfig -- ^ Specifies the CLI execution configuration.
-  -> EpochStateView -- ^ Current epoch state view for transaction building. It can be obtained
-                    -- using the 'getEpochStateView' function.
-  -> FilePath -- ^ Path to the node configuration file as returned by 'cardanoTestnetDefault'.
-  -> FilePath -- ^ Path to the cardano-node unix socket file.
-  -> ShelleyBasedEra ConwayEra -- ^ The Shelley based era witness for ConwayEra
-  -> FilePath -- ^ Base directory path where generated files will be stored.
-  -> String -- ^ Name for the subfolder that will be created under 'work' folder.
-  -> PaymentKeyInfo -- ^ Wallet that will pay for the transaction.
-  -> StakingKeyPair -- ^ Staking key pair used for delegation.
-  -> m ()
-delegateToAlwaysNoConfidence execConfig epochStateView configurationFile socketPath sbe work prefix =
-  delegateToAutomaticDRep execConfig epochStateView configurationFile socketPath sbe work prefix
-                          "--always-no-confidence"
 
 -- Run a no confidence motion and check the result. Vote "yes" with 3 SPOs. Check the no
 -- confidence motion passes.
