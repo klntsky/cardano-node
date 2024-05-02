@@ -30,7 +30,7 @@ import qualified Data.Map as Map
 import           Data.String (fromString)
 import qualified Data.Text as Text
 import           Data.Word (Word32)
-import           GHC.Stack (callStack)
+import           GHC.Stack (callStack, HasCallStack)
 import           Lens.Micro ((^.))
 import           System.FilePath ((</>))
 
@@ -318,7 +318,7 @@ makeUpdateConstitutionalCommitteeProposal execConfig epochStateView configuratio
   return (governanceActionTxId, governanceActionIndex)
 
 delegateToAlwaysNoConfidence
-  :: (MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m)
+  :: (MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m, HasCallStack)
   => H.ExecConfig
   -> EpochStateView
   -> FilePath
@@ -334,7 +334,7 @@ delegateToAlwaysNoConfidence execConfig epochStateView configurationFile socketP
                           "--always-no-confidence"
 
 testNoConfidenceProposal
-  :: (MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m, Foldable t)
+  :: (MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m, Foldable t, HasCallStack)
   => H.ExecConfig
   -> EpochStateView
   -> FilePath
