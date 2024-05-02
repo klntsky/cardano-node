@@ -7,7 +7,7 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedAbstainDRep
-  ( AutomaticDRepFlag(..)
+  ( AutomaticDRepType(..)
   , hprop_check_predefined_abstain_drep
   , delegateToAutomaticDRep
   , desiredPoolNumberProposalTest
@@ -134,7 +134,7 @@ hprop_check_predefined_abstain_drep = H.integrationWorkspace "test-activity" $ \
                                        wallet0 Nothing [(1, "yes")] newNumberOfDesiredPools2 0 (Just newNumberOfDesiredPools2) 10
 
 -- | Which automatic DRep to delegate to
-data AutomaticDRepFlag = AlwaysAbstainDRep
+data AutomaticDRepType = AlwaysAbstainDRep
                        | NoConfidenceDRep
 
 delegateToAutomaticDRep
@@ -147,7 +147,7 @@ delegateToAutomaticDRep
   -> ShelleyBasedEra ConwayEra -- ^ The Shelley based era witness for ConwayEra
   -> FilePath -- ^ Base directory path where generated files will be stored.
   -> String -- ^ Name for the subfolder that will be created under 'work' folder.
-  -> AutomaticDRepFlag -- ^ Which type of automatic DRep to delegate to.
+  -> AutomaticDRepType -- ^ Which type of automatic DRep to delegate to.
   -> PaymentKeyInfo -- ^ Wallet that will pay for the transaction.
   -> StakingKeyPair -- ^ Staking key pair used for delegation.
   -> m ()

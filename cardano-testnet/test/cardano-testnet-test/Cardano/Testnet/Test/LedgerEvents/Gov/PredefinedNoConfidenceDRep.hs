@@ -19,7 +19,7 @@ import qualified Cardano.Ledger.Shelley.LedgerState as L
 import           Cardano.Testnet
 import           Cardano.Testnet.Test.LedgerEvents.Gov.PredefinedAbstainDRep
                    (desiredPoolNumberProposalTest,
-                   getDesiredPoolNumberValue, voteChangeProposal, delegateToAutomaticDRep, AutomaticDRepFlag (..))
+                   getDesiredPoolNumberValue, voteChangeProposal, delegateToAutomaticDRep, AutomaticDRepType (..))
 
 import           Prelude
 
