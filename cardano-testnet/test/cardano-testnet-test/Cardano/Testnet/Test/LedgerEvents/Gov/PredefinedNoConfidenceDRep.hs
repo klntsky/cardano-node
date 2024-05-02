@@ -317,17 +317,19 @@ makeUpdateConstitutionalCommitteeProposal execConfig epochStateView configuratio
 
   return (governanceActionTxId, governanceActionIndex)
 
+-- | Delegate to a staking key pair with the delegation preference set to always no confidence.
 delegateToAlwaysNoConfidence
   :: (MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m, HasCallStack)
-  => H.ExecConfig
-  -> EpochStateView
-  -> FilePath
-  -> FilePath
-  -> ShelleyBasedEra ConwayEra
-  -> FilePath
-  -> String
-  -> PaymentKeyInfo
-  -> StakingKeyPair
+  => H.ExecConfig -- ^ Specifies the CLI execution configuration.
+  -> EpochStateView -- ^ Current epoch state view for transaction building. It can be obtained
+                    -- using the 'getEpochStateView' function.
+  -> FilePath -- ^ Path to the node configuration file as returned by 'cardanoTestnetDefault'.
+  -> FilePath -- ^ Path to the cardano-node unix socket file.
+  -> ShelleyBasedEra ConwayEra -- ^ The Shelley based era witness for ConwayEra
+  -> FilePath -- ^ Base directory path where generated files will be stored.
+  -> String -- ^ Name for the subfolder that will be created under 'work' folder.
+  -> PaymentKeyInfo -- ^ Wallet that will pay for the transaction.
+  -> StakingKeyPair -- ^ Staking key pair used for delegation.
   -> m ()
 delegateToAlwaysNoConfidence execConfig epochStateView configurationFile socketPath sbe work prefix =
   delegateToAutomaticDRep execConfig epochStateView configurationFile socketPath sbe work prefix
