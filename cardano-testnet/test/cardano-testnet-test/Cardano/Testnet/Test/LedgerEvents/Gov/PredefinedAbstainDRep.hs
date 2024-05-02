@@ -152,7 +152,7 @@ delegateToAlwaysAbstain execConfig epochStateView configurationFile socketPath s
 
 -- | Delegates to a staking key pair with the delegation preference set to automatic.
 delegateToAutomaticDRep
-  :: (HasCallStack, MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m)
+  :: (HasCallStack, MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m)  
   => H.ExecConfig -- ^ Specifies the CLI execution configuration.
   -> EpochStateView -- ^ Current epoch state view for transaction building. It can be obtained
                     -- using the 'getEpochStateView' function.
