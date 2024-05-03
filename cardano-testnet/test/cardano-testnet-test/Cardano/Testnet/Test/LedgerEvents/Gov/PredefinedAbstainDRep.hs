@@ -17,6 +17,7 @@ import           Cardano.Api.Error (displayError)
 import           Cardano.Ledger.Conway.Core (ppNOptL)
 import           Cardano.Ledger.Conway.Governance (ConwayGovState, cgsCurPParamsL)
 import           Cardano.Ledger.Core (EraPParams)
+import           Cardano.Ledger.Shelley.LedgerState (epochStateGovStateL, nesEpochStateL)
 import           Cardano.Testnet
 
 import           Prelude
@@ -33,7 +34,8 @@ import           System.FilePath ((</>))
 import           Testnet.Components.DReps (createCertificatePublicationTxBody, createVotingTxBody,
                    generateVoteFiles, retrieveTransactionId, signTx, submitTx)
 import           Testnet.Components.Query (EpochStateView, findLargestUtxoForPaymentKey,
-                   getCurrentEpochNo, getEpochStateView, getGovState, getMinDRepDeposit)
+                   getCurrentEpochNo, getEpochStateView, getGovState, getMinDRepDeposit,
+                   waitAndCheckNewEpochState)
 import           Testnet.Defaults (defaultDRepKeyPair, defaultDelegatorStakeKeyPair)
 import qualified Testnet.Process.Cli as P
 import qualified Testnet.Process.Run as H
@@ -109,7 +111,7 @@ hprop_check_predefined_abstain_drep = H.integrationWorkspace "test-activity" $ \
   -- Do some proposal and vote yes with the first DRep only
   -- and assert that proposal does NOT pass.
   void $ desiredPoolNumberProposalTest execConfig epochStateView configurationFile socketPath ceo gov "firstProposal"
-                                       wallet0 Nothing [(1, "yes")] newNumberOfDesiredPools initialDesiredNumberOfPools 2
+                                       wallet0 Nothing [(1, "yes")] newNumberOfDesiredPools 3 (Just initialDesiredNumberOfPools) 10
 
   -- Take the last two stake delegators and delegate them to "Abstain".
   delegateToAlwaysAbstain execConfig epochStateView configurationFile socketPath sbe gov "delegateToAbstain1"
@@ -121,7 +123,7 @@ hprop_check_predefined_abstain_drep = H.integrationWorkspace "test-activity" $ \
   -- and assert the new proposal passes now.
   let newNumberOfDesiredPools2 = newNumberOfDesiredPools + 1
   void $ desiredPoolNumberProposalTest execConfig epochStateView configurationFile socketPath ceo gov "secondProposal"
-                                       wallet0 Nothing [(1, "yes")] newNumberOfDesiredPools2 newNumberOfDesiredPools2 2
+                                       wallet0 Nothing [(1, "yes")] newNumberOfDesiredPools2 0 (Just newNumberOfDesiredPools2) 10
 
 delegateToAlwaysAbstain
   :: (HasCallStack, MonadTest m, MonadIO m, H.MonadAssertion m, MonadCatch m)
@@ -184,11 +186,12 @@ desiredPoolNumberProposalTest
   -> t (Int, String) -- ^ Model of votes to issue as a list of pairs of amount of each vote
                      -- together with the vote (i.e: "yes", "no", "abstain")
   -> Integer -- ^ What to change the @desiredPoolNumber@ to
-  -> Integer -- ^ What the expected result is of the change
-  -> Integer -- ^ How many epochs to wait before checking the result
+  -> Integer -- ^ Minimum number of epochs to wait before checking the result
+  -> Maybe Integer -- ^ What the expected result is of the change (if anything)
+  -> Integer -- ^ Maximum number of epochs to wait while waiting for the result
   -> m (String, Word32)
 desiredPoolNumberProposalTest execConfig epochStateView configurationFile socketPath ceo work prefix
-                              wallet previousProposalInfo votes change expected epochsToWait = do
+                              wallet previousProposalInfo votes change minWait mExpected maxWait = do
   let sbe = conwayEraOnwardsToShelleyBasedEra ceo
 
   baseDir <- H.createDirectoryIfMissing $ work </> prefix
@@ -207,10 +210,9 @@ desiredPoolNumberProposalTest execConfig epochStateView configurationFile socket
   (EpochNo epochAfterProp) <- getCurrentEpochNo epochStateView
   H.note_ $ "Epoch after \"" <> prefix <> "\" prop: " <> show epochAfterProp
 
-  void $ waitUntilEpoch (File configurationFile) (File socketPath) (EpochNo (epochAfterProp + fromIntegral epochsToWait))
-  desiredPoolNumberAfterProp <- getDesiredPoolNumberValue epochStateView ceo
-
-  desiredPoolNumberAfterProp === expected
+  waitAndCheckNewEpochState epochStateView configurationFile socketPath ceo
+                            (fromIntegral minWait) (fromIntegral <$> mExpected) (fromIntegral maxWait)
+                            (nesEpochStateL . epochStateGovStateL . cgsCurPParamsL . ppNOptL)
 
   return thisProposal
 
@@ -291,10 +293,12 @@ makeDesiredPoolNumberChangeProposal execConfig epochStateView configurationFile 
 
   governanceActionTxId <- retrieveTransactionId execConfig signedProposalTx
 
+  (EpochNo curEpoch) <- getCurrentEpochNo epochStateView
+
   !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex sbe (fromString governanceActionTxId))
                                         (unFile configurationFile)
                                         (unFile socketPath)
-                                        (EpochNo 30)
+                                        (EpochNo $ curEpoch + 10)
 
   governanceActionIndex <- case propSubmittedResult of
                              Left e ->
