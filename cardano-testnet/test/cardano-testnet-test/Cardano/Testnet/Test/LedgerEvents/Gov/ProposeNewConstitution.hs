@@ -172,7 +172,7 @@ hprop_ledger_events_propose_new_constitution = H.integrationWorkspace "propose-n
 
   governanceActionTxId <- retrieveTransactionId execConfig signedProposalTx
 
-  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex sbe (fromString governanceActionTxId))
+  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex ceo (fromString governanceActionTxId))
                                         configurationFile
                                         socketPath
                                         (EpochNo 10)

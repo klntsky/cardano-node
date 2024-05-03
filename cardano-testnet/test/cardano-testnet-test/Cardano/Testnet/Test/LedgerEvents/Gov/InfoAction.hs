@@ -55,8 +55,9 @@ hprop_ledger_events_info_action = H.integrationRetryWorkspace 0 "info-hash" $ \t
 
   work <- H.createDirectoryIfMissing $ tempAbsPath' </> "work"
 
-  let sbe = ShelleyBasedEraConway
+  let ceo = ConwayEraOnwardsConway
       era = toCardanoEra sbe
+      sbe = conwayEraOnwardsToShelleyBasedEra ceo
       fastTestnetOptions = cardanoDefaultTestnetOptions
         { cardanoEpochLength = 100
         , cardanoNodeEra = AnyCardanoEra era
@@ -147,7 +148,7 @@ hprop_ledger_events_info_action = H.integrationRetryWorkspace 0 "info-hash" $ \t
     , "--tx-file", txbodySignedFp
     ]
 
-  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex sbe (fromString txidString))
+  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex ceo (fromString txidString))
                                         configurationFile
                                         socketPath
                                         (EpochNo 10)

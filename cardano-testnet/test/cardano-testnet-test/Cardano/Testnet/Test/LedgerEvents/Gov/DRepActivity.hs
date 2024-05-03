@@ -308,7 +308,7 @@ makeActivityChangeProposal execConfig epochStateView configurationFile socketPat
 
   governanceActionTxId <- retrieveTransactionId execConfig signedProposalTx
 
-  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex sbe (fromString governanceActionTxId))
+  !propSubmittedResult <- findCondition (maybeExtractGovernanceActionIndex ceo (fromString governanceActionTxId))
                                         (unFile configurationFile)
                                         (unFile socketPath)
                                         (EpochNo timeout)
