@@ -188,7 +188,7 @@ activityChangeProposalTest execConfig epochStateView configurationFile socketPat
   (EpochNo epochAfterProp) <- getCurrentEpochNo epochStateView
   H.note_ $ "Epoch after \"" <> prefix <> "\" prop: " <> show epochAfterProp
 
-  waitAndCheckNewEpochState epochStateView configurationFile socketPath sbe minWait (EpochInterval <$> mExpected) maxWait
+  waitAndCheckNewEpochState epochStateView configurationFile socketPath ceo minWait (EpochInterval <$> mExpected) maxWait
                             (nesEpochStateL . epochStateGovStateL . curPParamsGovStateL . ppDRepActivityL)
 
   return thisProposal
