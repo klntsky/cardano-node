@@ -15,7 +15,6 @@ import           Cardano.Api.Ledger (EpochInterval (EpochInterval), drepExpiry)
 
 import           Cardano.Ledger.Conway.Core (curPParamsGovStateL)
 import           Cardano.Ledger.Conway.PParams (ppDRepActivityL)
-import           Cardano.Ledger.Shelley.API (NewEpochState (..))
 import           Cardano.Ledger.Shelley.LedgerState (epochStateGovStateL, nesEpochStateL)
 import           Cardano.Testnet
 
@@ -23,13 +22,11 @@ import           Prelude
 
 import           Control.Monad
 import           Control.Monad.Catch (MonadCatch)
-import           Control.Monad.Trans.State.Strict (StateT)
 import qualified Data.Map as Map
 import           Data.String
 import qualified Data.Text as Text
 import           Data.Word (Word32, Word64)
 import           GHC.Stack (HasCallStack, callStack)
-import           Lens.Micro ((^.))
 import           System.FilePath ((</>))
 
 import           Testnet.Components.DReps (createVotingTxBody, delegateToDRep, generateVoteFiles,
@@ -37,7 +34,7 @@ import           Testnet.Components.DReps (createVotingTxBody, delegateToDRep, g
                    submitTx)
 import           Testnet.Components.Query (EpochStateView, checkDRepState,
                    findLargestUtxoForPaymentKey, getCurrentEpochNo, getEpochStateView,
-                   getMinDRepDeposit)
+                   getMinDRepDeposit, waitAndCheckNewEpochState)
 import           Testnet.Defaults
 import qualified Testnet.Process.Cli as P
 import qualified Testnet.Process.Run as H
@@ -191,45 +188,10 @@ activityChangeProposalTest execConfig epochStateView configurationFile socketPat
   (EpochNo epochAfterProp) <- getCurrentEpochNo epochStateView
   H.note_ $ "Epoch after \"" <> prefix <> "\" prop: " <> show epochAfterProp
 
-  waitAndCheck epochAfterProp
+  waitAndCheckNewEpochState epochStateView configurationFile socketPath sbe minWait (EpochInterval <$> mExpected) maxWait
+                            (nesEpochStateL . epochStateGovStateL . curPParamsGovStateL . ppDRepActivityL)
 
   return thisProposal
-
-  where
-    waitAndCheck :: (MonadTest m, MonadIO m)
-                 => Word64 -> m ()
-    waitAndCheck epochAfterProp = do
-      !eProposalResult
-        <- evalIO . runExceptT $ foldEpochState
-                                    (File configurationFile)
-                                    (File socketPath)
-                                    FullValidation
-                                    (EpochNo (epochAfterProp + maxWait))
-                                    ()
-                                    (\epochState _ _ -> filterEpochState (isSuccess epochAfterProp) epochState)
-      void $ evalEither eProposalResult
-
-    filterEpochState :: (EpochNo -> EpochInterval -> Bool) -> AnyNewEpochState -> StateT () IO LedgerStateCondition
-    filterEpochState f (AnyNewEpochState sbe newEpochState) =
-        caseShelleyToBabbageOrConwayEraOnwards
-          (const $ error "activityChangeProposalTest: Only conway era onwards supported")
-          (const $ do
-            let pParams = newEpochState ^. nesEpochStateL . epochStateGovStateL . curPParamsGovStateL . ppDRepActivityL
-                currEpoch = nesEL newEpochState
-            return (if f currEpoch pParams
-                    then ConditionMet
-                    else ConditionNotMet)
-          )
-          sbe
-
-    isSuccess :: Word64 -> EpochNo -> EpochInterval -> Bool
-    isSuccess epochAfterProp (EpochNo epochNo) (EpochInterval epochInterval) =
-      (epochAfterProp + minWait <= epochNo) &&
-      (case mExpected of
-        Nothing -> True
-        Just expected -> epochInterval == expected) &&
-      (epochNo <= epochAfterProp + maxWait)
-
 
 makeActivityChangeProposal
   :: (HasCallStack, H.MonadAssertion m, MonadTest m, MonadCatch m, MonadIO m)
