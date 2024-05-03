@@ -34,8 +34,8 @@ packages:
 source-repository-package
   type: git
   location: https://github.com/IntersectMBO/cardano-ledger
-  tag: a6ee7925fa8070497658a2c8b3770dcd79017281
-  --sha256: sha256-rigDlJcsTYa56/qa+W9TGBu2IbHLndmrHqVzcHoPTBI=
+  tag: be59c234150b6c5a24596ec6829810c2d2dfa732
+  --sha256: sha256-lmX76vtQ8gEDizUmByZ2XL6SYhBxxMQtZVBeIEp/8Lw=
   subdir: eras/allegra/impl
     eras/alonzo/impl
     eras/alonzo/test-suite
@@ -66,25 +66,18 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/IntersectMBO/ouroboros-network
-  tag: eb6ac9aa088aa3763e1163824a405fbb21303eb4
-  --sha256: sha256-KZAxb6Lf9++JtoOTkapvCMpQOwz97zkOO30Bu8Asuak=
-  subdir: cardano-ping
-          monoidal-synchronisation
-          network-mux
-          ouroboros-network
+  tag: a38e5a1b6305bd830ae7d088942ff709e187e3fc
+  --sha256: sha256-L/EV1MX3Dhq2+Hlg+F/3Y2h8YLeld05hUGty2VRrsuM=
+  subdir: ouroboros-network
           ouroboros-network-api
           ouroboros-network-framework
-          ouroboros-network-mock
           ouroboros-network-protocols
-          ouroboros-network-testing
-          ntp-client
-          cardano-client
 
 source-repository-package
   type: git
   location: https://github.com/IntersectMBO/ouroboros-consensus
-  tag: ad3720affe4c967b327ae6fed48aa8da335e8e25
-  --sha256: sha256-Ov5hzHdOmWuv36GDhtM/JN20Ainj3K3c4J/Av3YVHe8=
+  tag: 0a1a154f08926b7b24bcc0a9ddba5aa02a2568ab
+  --sha256: sha256-/cceqSX+SqJ69vGFkf/2bdR3S8rPyTYcuWcBIYJysN4=
   subdir: ouroboros-consensus
           ouroboros-consensus-cardano
           ouroboros-consensus-protocol
@@ -95,16 +88,16 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/IntersectMBO/cardano-api
-  tag: 1a36f22523fafc3e0d70c1f05e7066b992b392a5
-  --sha256: sha256-v4VetLviibpez9flbFaHb3aji5Rbmh3fEFhWkzmLyNw=
+  tag: 42d6f0ff3b3e12497d127617433fdc758b3c8009
+  --sha256: sha256-QkcJaB/uEeuOEdv7EL8phYp++JlOZkf6996wTh0DmZQ=
   subdir: cardano-api
           cardano-api-gen
 
 source-repository-package
   type: git
   location: https://github.com/IntersectMBO/cardano-cli
-  tag: 96b09a02afc43ee335f708446fcaedd5e681f112
-  --sha256: sha256-ypyWYFwPoP/OIZYZXC1IbBUrqMLxKxTPg5um1jw71GY=
+  tag: fe61b7d8233891743e9baaa259e759800975cbf6
+  --sha256: sha256-4/mLOdN/jdozEPteMTCye6gsqdNW6QltjjYoYMMHQvc=
   subdir: cardano-cli
 
 program-options

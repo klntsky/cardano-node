@@ -26,9 +26,9 @@ import           Ouroboros.Network.InboundGovernor (InboundGovernorTrace (..))
 import qualified Ouroboros.Network.InboundGovernor as InboundGovernor
 import           Ouroboros.Network.InboundGovernor.State (InboundGovernorCounters (..))
 import qualified Ouroboros.Network.NodeToNode as NtN
-import           Ouroboros.Network.PeerSelection.Governor (DebugPeerSelection (..),
-                   DebugPeerSelectionState (..), PeerSelectionCounters (..),
-                   PeerSelectionState (..), PeerSelectionTargets (..), TracePeerSelection (..))
+import           Ouroboros.Network.PeerSelection.Governor (ChurnCounters(..), DebugPeerSelection (..),
+                   DebugPeerSelectionState (..), PeerSelectionCounters,
+                   PeerSelectionState (..), PeerSelectionTargets (..), PeerSelectionView (..), TracePeerSelection (..))
 import           Ouroboros.Network.PeerSelection.PeerStateActions (PeerSelectionActionsTrace (..))
 import           Ouroboros.Network.PeerSelection.RelayAccessPoint (RelayAccessPoint)
 import           Ouroboros.Network.PeerSelection.RootPeersDNS.LocalRootPeers
@@ -37,8 +37,6 @@ import           Ouroboros.Network.PeerSelection.RootPeersDNS.PublicRootPeers
                    (TracePublicRootPeers (..))
 import qualified Ouroboros.Network.PeerSelection.State.EstablishedPeers as EstablishedPeers
 import qualified Ouroboros.Network.PeerSelection.State.KnownPeers as KnownPeers
-import           Ouroboros.Network.PeerSelection.State.LocalRootPeers (HotValency (..),
-                   WarmValency (..))
 import           Ouroboros.Network.PeerSelection.Types ()
 import           Ouroboros.Network.Protocol.PeerSharing.Type (PeerSharingAmount (..))
 import           Ouroboros.Network.RethrowPolicy (ErrorCommand (..))
@@ -534,7 +532,18 @@ instance LogFormatting (TracePeerSelection SockAddr) where
             , "upstreamyness" .= dpssUpstreamyness ds
             , "fetchynessBlocks" .= dpssFetchynessBlocks ds
             ]
-
+  forMachine _dtal (TraceChurnAction dt a n) =
+    mconcat [ "kind" .= String "ChurnAction"
+            , "diffTime" .= toJSON dt
+            , "action" .= show a
+            , "numPeers" .= n
+            ]
+  forMachine _dtal (TraceChurnTimeout dt a n) =
+    mconcat [ "kind" .= String "ChurnTimeout"
+            , "diffTime" .= toJSON dt
+            , "action" .= show a
+            , "numPeers" .= n
+            ]
   forHuman = pack . show
 
 instance MetaTrace (TracePeerSelection SockAddr) where
@@ -648,6 +657,10 @@ instance MetaTrace (TracePeerSelection SockAddr) where
       Namespace [] ["OutboundGovernorCriticalFailure"]
     namespaceFor TraceDebugState {} =
       Namespace [] ["DebugState"]
+    namespaceFor TraceChurnAction {} =
+      Namespace [] ["ChurnAction"]
+    namespaceFor TraceChurnTimeout {} =
+      Namespace [] ["ChurnTimeout"]
 
     severityFor (Namespace [] ["LocalRootPeersChanged"]) _ = Just Notice
     severityFor (Namespace [] ["TargetsChanged"]) _ = Just Notice
@@ -681,6 +694,8 @@ instance MetaTrace (TracePeerSelection SockAddr) where
     severityFor (Namespace [] ["KnownInboundConnection"]) _ = Just Info
     severityFor (Namespace [] ["OutboundGovernorCriticalFailure"]) _ = Just Error
     severityFor (Namespace [] ["DebugState"]) _ = Just Info
+    severityFor (Namespace [] ["ChurnAction"]) _ = Just Info
+    severityFor (Namespace [] ["ChurnTimeout"]) _ = Just Warning
     severityFor _ _ = Nothing
 
     documentFor (Namespace [] ["LocalRootPeersChanged"]) = Just  ""
@@ -739,6 +754,8 @@ instance MetaTrace (TracePeerSelection SockAddr) where
       "Outbound Governor was killed unexpectedly"
     documentFor (Namespace [] ["DebugState"]) = Just
       "peer selection internal state"
+    documentFor (Namespace [] ["ChurnAction"]) = Just  ""
+    documentFor (Namespace [] ["ChurnTimeout"]) = Just  ""
     documentFor _ = Nothing
 
     allNamespaces = [
@@ -842,40 +859,40 @@ instance MetaTrace (DebugPeerSelection SockAddr) where
 instance LogFormatting PeerSelectionCounters where
   forMachine _dtal ev =
     mconcat [ "kind" .= String "PeerSelectionCounters"
-            , "coldPeers" .= coldPeers ev
-            , "warmPeers" .= warmPeers ev
-            , "hotPeers" .= hotPeers ev
-            , "coldBigLedgerPeers" .= coldBigLedgerPeers ev
-            , "warmBigLedgerPeers" .= warmBigLedgerPeers ev
-            , "hotBigLedgerPeers" .= hotBigLedgerPeers ev
-            , "localRoots" .= toJSON (localRoots ev)
+            , "knownPeers" .= numberOfKnownPeers ev
+            , "establishedPeers" .= numberOfEstablishedPeers ev
+            , "activePeers" .= numberOfActivePeers ev
+            , "knownBigLedgerPeers" .= numberOfKnownBigLedgerPeers ev
+            , "establishedBigLedgerPeers" .= numberOfEstablishedBigLedgerPeers ev
+            , "activeBigLedgerPeers" .= numberOfActiveBigLedgerPeers ev
+            , "knownLocalRoots" .= toJSON (numberOfKnownLocalRootPeers ev)
             ]
   forHuman = pack . show
-  asMetrics PeerSelectionCounters {..} =
+  asMetrics ev =
     [ IntM
         "Net.PeerSelection.Cold"
-        (fromIntegral coldPeers)
+        (fromIntegral $ numberOfKnownPeers ev)
     , IntM
         "Net.PeerSelection.Warm"
-        (fromIntegral warmPeers)
+        (fromIntegral $ numberOfEstablishedPeers ev)
     , IntM
         "Net.PeerSelection.Hot"
-        (fromIntegral hotPeers)
+        (fromIntegral $ numberOfActivePeers ev)
     , IntM
         "Net.PeerSelection.ColdBigLedgerPeers"
-        (fromIntegral coldBigLedgerPeers)
+        (fromIntegral $ numberOfKnownBigLedgerPeers ev)
     , IntM
         "Net.PeerSelection.WarmBigLedgerPeers"
-        (fromIntegral warmBigLedgerPeers)
+        (fromIntegral $ numberOfEstablishedBigLedgerPeers ev)
     , IntM
         "Net.PeerSelection.HotBigLedgerPeers"
-        (fromIntegral hotBigLedgerPeers)
+        (fromIntegral $ numberOfActiveBigLedgerPeers ev)
     , IntM
         "Net.PeerSelection.WarmLocalRoots"
-        (fromIntegral $ getWarmValency $ foldl' (\a (_, b) -> a + b) 0 localRoots)
+        (fromIntegral $ numberOfEstablishedLocalRootPeers ev)
     , IntM
         "Net.PeerSelection.HotLocalRoots"
-        (fromIntegral $ getHotValency $ foldl' (\a (b, _) -> a + b) 0 localRoots)
+        (fromIntegral $ numberOfActiveLocalRootPeers ev)
     ]
 
 instance MetaTrace PeerSelectionCounters where
@@ -1666,4 +1683,29 @@ instance MetaTrace NtN.AcceptConnectionsPolicyTrace where
         Namespace [] ["ConnectionRateLimiting"]
       , Namespace [] ["ConnectionHardLimit"]
       , Namespace [] ["ConnectionLimitResume"]
+      ]
+
+--------------------------------------------------------------------------------
+-- ChurnCounters Tracer
+--------------------------------------------------------------------------------
+
+instance LogFormatting ChurnCounters where
+  forMachine _dtal (ChurnCounter a n) =
+    mconcat [ "kind" .= String "ChurnCounter"
+            , "action" .= show a
+            , "numPeers" .= n
+            ]
+  forHuman = pack . show
+instance MetaTrace ChurnCounters where
+    namespaceFor ChurnCounter {} = Namespace [] ["Counters"]
+
+    severityFor (Namespace _ ["Counters"]) _ = Just Info
+    severityFor _ _ = Nothing
+
+    documentFor (Namespace _ ["Counters"]) = Just
+      "Churn counters"
+    documentFor _ = Nothing
+
+    allNamespaces =
+      [ Namespace [] ["Counters"]
       ]

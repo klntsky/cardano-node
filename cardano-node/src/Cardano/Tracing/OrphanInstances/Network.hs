@@ -53,9 +53,9 @@ import           Ouroboros.Network.NodeToNode (ErrorPolicyTrace (..), NodeToNode
                    NodeToNodeVersionData (..), RemoteAddress, TraceSendRecv (..), WithAddr (..))
 import qualified Ouroboros.Network.NodeToNode as NtN
 import           Ouroboros.Network.PeerSelection.Bootstrap
-import           Ouroboros.Network.PeerSelection.Governor (DebugPeerSelection (..),
-                   DebugPeerSelectionState (..), PeerSelectionCounters (..),
-                   PeerSelectionState (..), PeerSelectionTargets (..), TracePeerSelection (..))
+import           Ouroboros.Network.PeerSelection.Governor (ChurnCounters (..), DebugPeerSelection (..),
+                   DebugPeerSelectionState (..), PeerSelectionCounters,
+                   PeerSelectionState (..), PeerSelectionTargets (..), PeerSelectionView (..), TracePeerSelection (..))
 import           Ouroboros.Network.PeerSelection.LedgerPeers
 import           Ouroboros.Network.PeerSelection.PeerSharing (PeerSharing (..))
 import           Ouroboros.Network.PeerSelection.PeerStateActions (PeerSelectionActionsTrace (..))
@@ -110,6 +110,7 @@ import           Data.Data (Proxy (..))
 import           Data.Foldable (Foldable (..))
 import           Data.Functor.Identity (Identity (..))
 import qualified Data.IP as IP
+import qualified Data.List as List
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import           Data.Text (Text, pack)
@@ -437,6 +438,8 @@ instance HasSeverityAnnotation (TracePeerSelection addr) where
       TraceGovernorWakeup        {} -> Info
       TraceChurnWait             {} -> Info
       TraceChurnMode             {} -> Info
+      TraceChurnAction           {} -> Info
+      TraceChurnTimeout           {} -> Warning
       TraceKnownInboundConnection {} -> Info
 
       TraceForgetBigLedgerPeers  {} -> Info
@@ -566,6 +569,10 @@ instance HasSeverityAnnotation (InboundGovernorTrace addr) where
 instance HasPrivacyAnnotation (Server.RemoteTransitionTrace addr)
 instance HasSeverityAnnotation (Server.RemoteTransitionTrace addr) where
   getSeverityAnnotation _ = Debug
+
+instance HasPrivacyAnnotation ChurnCounters
+instance HasSeverityAnnotation ChurnCounters where
+  getSeverityAnnotation _ = Info
 
 --
 -- | instances of @Transformable@
@@ -785,6 +792,13 @@ instance (Show addr, ToJSON addr)
   trTransformer = trStructuredText
 instance Show addr
       => HasTextFormatter (Server.RemoteTransitionTrace addr) where
+  formatText a _ = pack (show a)
+
+instance Show ChurnCounters where
+  show (ChurnCounter a n) = List.intercalate " " ["ChurnCounters", show a, show n]
+instance Transformable Text IO ChurnCounters where
+  trTransformer = trStructuredText
+instance HasTextFormatter ChurnCounters where
   formatText a _ = pack (show a)
 
 --
@@ -1911,6 +1925,18 @@ instance ToObject (TracePeerSelection SockAddr) where
             , "upstreamyness" .= dpssUpstreamyness ds
             , "fetchynessBlocks" .= dpssFetchynessBlocks ds
             ]
+  toObject _verb (TraceChurnAction dt a n) =
+    mconcat [ "kind" .= String "ChurnAction"
+            , "diffTime" .= toJSON dt
+            , "action" .= show a
+            , "numPeers" .= n
+            ]
+  toObject _verb (TraceChurnTimeout dt a n) =
+    mconcat [ "kind" .= String "ChurnTimeout"
+            , "diffTime" .= toJSON dt
+            , "action" .= show a
+            , "numPeers" .= n
+            ]
 
 -- Connection manager abstract state.  For explanation of each state see
 -- <https://hydra.iohk.io/job/Cardano/ouroboros-network/native.network-docs.x86_64-linux/latest/download/2>
@@ -2026,13 +2052,13 @@ instance Show lAddr => ToObject (PeerSelectionActionsTrace SockAddr lAddr) where
 instance ToObject PeerSelectionCounters where
   toObject _verb ev =
     mconcat [ "kind" .= String "PeerSelectionCounters"
-             , "coldPeers" .= coldPeers ev
-             , "warmPeers" .= warmPeers ev
-             , "hotPeers" .= hotPeers ev
-             , "coldBigLedgerPeers" .= coldBigLedgerPeers ev
-             , "warmBigLedgerPeers" .= warmBigLedgerPeers ev
-             , "hotBigLedgerPeers" .= hotBigLedgerPeers ev
-             ]
+            , "knownPeers" .= numberOfKnownPeers ev
+            , "establishedPeers" .= numberOfEstablishedPeers ev
+            , "activePeers" .= numberOfActivePeers ev
+            , "knownBigLedgerPeers" .= numberOfKnownBigLedgerPeers ev
+            , "establishedBigLedgerPeers" .= numberOfEstablishedBigLedgerPeers ev
+            , "activeBigLedgerPeers" .= numberOfActiveBigLedgerPeers ev
+            ]
 
 instance (Show (ClientHasAgency st), Show (ServerHasAgency st))
   => ToJSON (PeerHasAgency pr st) where
@@ -2573,3 +2599,10 @@ instance FromJSON PeerTrustable where
 instance ToJSON PeerTrustable where
   toJSON IsTrustable = Bool True
   toJSON IsNotTrustable = Bool False
+
+instance ToObject ChurnCounters where
+  toObject _verb (ChurnCounter a n) =
+    mconcat [ "kind" .= String "ChurnCounter"
+            , "action" .= show a
+            , "numPeers" .= n
+            ]

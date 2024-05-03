@@ -589,6 +589,11 @@ mkDiffusionTracersExtra configReflection trBase trForward mbTrEKG _trDataPoint t
       ["Net", "Peers", "Ledger"]
     configureTracers configReflection trConfig [dtLedgerPeersTr]
 
+    !dtChurnCountersTr <- mkCardanoTracer
+      trBase trForward mbTrEKG
+      ["Net", "PeerSelection", "Churn"]
+    configureTracers configReflection trConfig [dtChurnCountersTr]
+
     pure $ Diffusion.P2PTracers P2P.TracersExtra
              { P2P.dtTraceLocalRootPeersTracer = Tracer $
                  traceWith localRootPeersTr
@@ -622,6 +627,8 @@ mkDiffusionTracersExtra configReflection trBase trForward mbTrEKG _trDataPoint t
                  traceWith localServerTr
              , P2P.dtTraceLedgerPeersTracer = Tracer $
                  traceWith dtLedgerPeersTr
+             , P2P.dtTraceChurnCounters = Tracer $
+                 traceWith dtChurnCountersTr
              }
 
 mkDiffusionTracersExtra configReflection trBase trForward mbTrEKG _trDataPoint trConfig DisabledP2PMode = do

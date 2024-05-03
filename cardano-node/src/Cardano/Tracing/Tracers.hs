@@ -95,7 +95,7 @@ import           Ouroboros.Network.InboundGovernor (InboundGovernorTrace (..))
 import           Ouroboros.Network.InboundGovernor.State (InboundGovernorCounters (..))
 import           Ouroboros.Network.NodeToClient (LocalAddress)
 import           Ouroboros.Network.NodeToNode (RemoteAddress)
-import           Ouroboros.Network.PeerSelection.Governor (PeerSelectionCounters (..))
+import           Ouroboros.Network.PeerSelection.Governor (PeerSelectionCounters, PeerSelectionView (..))
 import           Ouroboros.Network.Point (fromWithOrigin)
 import           Ouroboros.Network.Protocol.LocalStateQuery.Type (ShowQuery)
 import           Ouroboros.Network.TxSubmission.Inbound
@@ -429,6 +429,9 @@ mkTracers blockConfig tOpts@(TracingOnLegacy trSel) tr nodeKern ekgDirect enable
            , P2P.dtTraceLedgerPeersTracer =
                tracerOnOff (traceLedgerPeers trSel)
                             verb "LedgerPeers" tr
+           , P2P.dtTraceChurnCounters =
+               tracerOnOff (traceChurnCounters trSel)
+                            verb "ChurnCounters" tr
            }
        DisabledP2PMode ->
          Diffusion.NonP2PTracers NonP2P.TracersExtra
@@ -1473,13 +1476,13 @@ tracePeerSelectionCountersMetrics (OnOff False) _                = nullTracer
 tracePeerSelectionCountersMetrics (OnOff True)  (Just ekgDirect) = pscTracer
   where
     pscTracer :: Tracer IO PeerSelectionCounters
-    pscTracer = Tracer $ \(PeerSelectionCounters cold warm hot coldBigLedgerPeers warmBigLedgerPeers hotBigLedgerPeers _) -> do
-      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.cold" cold
-      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.warm" warm
-      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.hot"  hot
-      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.coldBigLedgerPeers" coldBigLedgerPeers
-      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.warmBigLedgerPeers" warmBigLedgerPeers
-      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.hotBigLedgerPeers" hotBigLedgerPeers
+    pscTracer = Tracer $ \psc -> do
+      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.known" $ numberOfKnownPeers psc
+      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.established" $ numberOfEstablishedPeers psc
+      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.active" $ numberOfActivePeers psc
+      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.knownBigLedgerPeers" $ numberOfKnownBigLedgerPeers psc
+      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.establishedBigLedgerPeers" $ numberOfEstablishedBigLedgerPeers psc
+      sendEKGDirectInt ekgDirect "cardano.node.metrics.peerSelection.activeBigLedgerPeers" $ numberOfActiveBigLedgerPeers psc
 
 
 traceInboundGovernorCountersMetrics
